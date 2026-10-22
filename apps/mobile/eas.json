@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.remindora.app"
+        "EXPO_PUBLIC_API_URL": "https://api-production-1921.up.railway.app"
       }
     },
     "production": {
@@ -26,7 +26,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.remindora.app"
+        "EXPO_PUBLIC_API_URL": "https://api-production-1921.up.railway.app"
       }
     },
     "lan": {

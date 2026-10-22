@@ -18,6 +18,8 @@ COPY apps/workers/package.json apps/workers/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/mobile/package.json apps/mobile/package.json
 COPY apps/desktop/package.json apps/desktop/package.json
+# redis-memory-server (local dev only) would otherwise compile Redis from source here.
+ENV REDISMS_DISABLE_POSTINSTALL=1
 RUN npm ci --ignore-scripts=false
 
 FROM deps AS build
