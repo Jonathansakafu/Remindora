@@ -35,10 +35,11 @@ export const serverEnvSchema = z.object({
   COOKIE_SECURE: bool,
   COOKIE_DOMAIN: z.string().optional(),
 
-  EMAIL_PROVIDER: z.enum(['console', 'smtp', 'resend']).default('console'),
+  EMAIL_PROVIDER: z.enum(['console', 'smtp', 'resend', 'brevo']).default('console'),
   EMAIL_FROM: z.string().default('Remindora <no-reply@remindora.app>'),
   SMTP_URL: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+  BREVO_API_KEY: z.string().optional(),
 
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

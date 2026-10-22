@@ -14,10 +14,11 @@ export interface EmailSender {
 }
 
 export interface EmailConfig {
-  provider: 'console' | 'smtp' | 'resend';
+  provider: 'console' | 'smtp' | 'resend' | 'brevo';
   from: string;
   smtpUrl?: string;
   resendApiKey?: string;
+  brevoApiKey?: string;
   /** Console provider output; defaults to console.log. */
   log?: (line: string) => void;
 }
@@ -46,6 +47,25 @@ export function createEmailSender(cfg: EmailConfig): EmailSender {
           if (!res.ok) throw new Error(`Resend responded ${res.status}`);
           const body = (await res.json()) as { id?: string };
           return { id: body.id ?? null };
+        },
+      };
+    }
+    case 'brevo': {
+      // HTTPS API, for hosts that block outbound SMTP. Sender must be verified in Brevo.
+      if (!cfg.brevoApiKey) throw new Error('BREVO_API_KEY is required for EMAIL_PROVIDER=brevo');
+      const m = /^\s*(?:"?([^"<]*?)"?\s*)?<([^>]+)>\s*$/.exec(cfg.from);
+      const sender = m ? { name: m[1] || undefined, email: m[2]! } : { email: cfg.from.trim() };
+      return {
+        async send(msg) {
+          const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: { 'api-key': cfg.brevoApiKey!, 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ sender, to: [{ email: msg.to }], subject: msg.subject, textContent: msg.text, htmlContent: msg.html }),
+            signal: AbortSignal.timeout(15_000),
+          });
+          if (!res.ok) throw new Error(`Brevo responded ${res.status}`);
+          const body = (await res.json()) as { messageId?: string };
+          return { id: body.messageId ?? null };
         },
       };
     }

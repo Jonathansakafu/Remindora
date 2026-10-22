@@ -27,7 +27,7 @@ export function createDeps(env: ServerEnv = loadServerEnv(), overrides: Partial<
     prisma: overrides.prisma ?? new PrismaClient(),
     redis,
     emitter: overrides.emitter ?? new Emitter(redis),
-    email: overrides.email ?? createEmailSender({ provider: env.EMAIL_PROVIDER, from: env.EMAIL_FROM, smtpUrl: env.SMTP_URL, resendApiKey: env.RESEND_API_KEY, log: (l) => log.info(l) }),
+    email: overrides.email ?? createEmailSender({ provider: env.EMAIL_PROVIDER, from: env.EMAIL_FROM, smtpUrl: env.SMTP_URL, resendApiKey: env.RESEND_API_KEY, brevoApiKey: env.BREVO_API_KEY, log: (l) => log.info(l) }),
     push: overrides.push ?? createPushProviders(env, log),
     keys,
     log,

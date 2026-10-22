@@ -69,6 +69,7 @@ export class AuthService {
       from: env.EMAIL_FROM,
       smtpUrl: env.SMTP_URL,
       resendApiKey: env.RESEND_API_KEY,
+      brevoApiKey: env.BREVO_API_KEY,
       log: (line) => this.logger.log(line),
     });
     // Browser e2e tests read sign-in codes from Redis. Only ever active when NODE_ENV=test.
