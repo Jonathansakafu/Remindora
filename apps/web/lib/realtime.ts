@@ -11,6 +11,15 @@ import { keys, patchTaskCaches, removeTaskFromCaches, scheduleTaskRefetch } from
 import { refreshSession, useSession } from './session';
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+const listeners = new Map<string, Set<(payload: unknown) => void>>();
+
+/** Subscribe to a realtime event regardless of when (or how often) the socket connects. */
+export function onRealtime<E extends keyof ServerToClientEvents>(event: E, handler: (payload: Parameters<ServerToClientEvents[E]>[0]) => void): () => void {
+  const set = listeners.get(event) ?? new Set();
+  set.add(handler as (p: unknown) => void);
+  listeners.set(event, set);
+  return () => void set.delete(handler as (p: unknown) => void);
+}
 
 /**
  * Connects the realtime channel and keeps caches in sync with other devices.
@@ -25,6 +34,7 @@ export function connectRealtime(qc: QueryClient, handlers: { onOpenTask: (id: st
     reconnectionDelayMax: 15_000,
   });
   socket = s;
+  s.onAny((event: string, payload: unknown) => listeners.get(event)?.forEach((fn) => fn(payload)));
   const mine = (origin?: string) => origin && origin === useSession.getState().sessionId;
 
   s.on('connect', () => {

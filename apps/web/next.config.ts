@@ -28,6 +28,7 @@ const config: NextConfig = {
   output: isDesktop ? 'export' : undefined,
   trailingSlash: isDesktop,
   images: { unoptimized: true },
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   ...(isDesktop
     ? {}
     : {

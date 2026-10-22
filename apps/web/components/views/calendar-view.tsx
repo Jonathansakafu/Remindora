@@ -1,5 +1,5 @@
 'use client';
-import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragOverlay, PointerSensor, pointerWithin, rectIntersection, useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent } from '@dnd-kit/core';
 import { Button, cn, priorityMeta, Segmented, Spinner } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
 import { useQuery } from '@tanstack/react-query';
@@ -27,6 +27,12 @@ interface CalData {
 }
 
 const HOUR = 48; // px per hour in time grids
+
+/** Drop on the day under the pointer; fall back to overlap near edges. */
+const underPointer: CollisionDetection = (args) => {
+  const hit = pointerWithin(args);
+  return hit.length ? hit : rectIntersection(args);
+};
 const PREMIUM_MODES: CalendarMode[] = ['day', '3day', 'multiweek', 'year'];
 
 function range(mode: CalendarMode, anchor: DateTime, weekStart: number) {
@@ -92,7 +98,7 @@ function TaskChip({ task, tz, style, compact, ghost }: { task: TaskDTO; tz: stri
 function DayColumn({ day, children, onDropHint }: { day: DateTime; children: React.ReactNode; onDropHint?: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: `time:${day.toISODate()}` });
   return (
-    <div ref={setNodeRef} className={cn('relative border-l border-line/70', isOver && 'bg-cyan/[0.05]')} style={{ height: HOUR * 24 }} data-hint={onDropHint}>
+    <div ref={setNodeRef} data-day={day.toISODate()} className={cn('relative border-l border-line/70', isOver && 'bg-cyan/[0.05]')} style={{ height: HOUR * 24 }} data-hint={onDropHint}>
       {Array.from({ length: 24 }).map((_, h) => (
         <div key={h} className="border-b border-line/40" style={{ height: HOUR }} />
       ))}
@@ -147,6 +153,13 @@ export function CalendarView({ projectId }: { projectId?: string }) {
   const [dragging, setDragging] = useState<TaskDTO | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const gridRef = useRef<HTMLDivElement>(null);
+  const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!dragging) return;
+    const track = (ev: PointerEvent) => (lastPointer.current = { x: ev.clientX, y: ev.clientY });
+    window.addEventListener('pointermove', track, { passive: true });
+    return () => window.removeEventListener('pointermove', track);
+  }, [dragging]);
 
   useEffect(() => {
     if (gridRef.current) gridRef.current.scrollTop = HOUR * 7;
@@ -175,7 +188,12 @@ export function CalendarView({ projectId }: { projectId?: string }) {
       update.mutate({ task, patch: { dueAt: target.toUTC().toISO(), allDay: !prev, ...(task.startAt && prev ? { startAt: target.minus({ minutes: task.durationMinutes ?? 0 }).toUTC().toISO() } : {}) } });
       return;
     }
-    const top = (e.active.rect.current.translated?.top ?? 0) - (e.over!.rect.top ?? 0);
+    // Schedule where the pointer actually is. dnd-kit's delta includes auto-scroll adjustments,
+    // so track the real pointer position during the drag instead.
+    const pointerY = lastPointer.current?.y ?? e.active.rect.current.translated?.top ?? 0;
+    // Use the column's live position: the time grid scrolls independently of dnd-kit's cached rects.
+    const column = document.querySelector<HTMLElement>(`[data-day="${iso}"]`);
+    const top = pointerY - (column?.getBoundingClientRect().top ?? e.over!.rect.top);
     const minutes = Math.max(0, Math.min(24 * 60 - 15, Math.round(((top / HOUR) * 60) / 15) * 15));
     const start = day.startOf('day').plus({ minutes });
     if (canBlock) {
@@ -193,7 +211,7 @@ export function CalendarView({ projectId }: { projectId?: string }) {
   const title = effectiveMode === 'year' ? anchor.toFormat('yyyy') : effectiveMode === 'month' ? anchor.toFormat('LLLL yyyy') : `${from.toFormat('d LLL')} – ${to.toFormat('d LLL yyyy')}`;
 
   return (
-    <DndContext sensors={sensors} onDragStart={(e) => setDragging(taskById.get(String(e.active.id)) ?? null)} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
+    <DndContext sensors={sensors} collisionDetection={underPointer} onDragStart={(e) => setDragging(taskById.get(String(e.active.id)) ?? null)} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
       <div className="flex flex-wrap items-center gap-2 px-4 pb-3 md:px-8">
         <div className="flex items-center gap-1">
           <Button size="icon-sm" variant="ghost" onClick={() => step(-1)} aria-label="Previous">

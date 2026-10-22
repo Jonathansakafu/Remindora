@@ -19,3 +19,5 @@ test-results/
 playwright-report/
 .local-infra/
 *.tsbuildinfo
+.next-e2e/
+e2e/.workers.pid

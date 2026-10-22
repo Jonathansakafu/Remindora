@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { Section } from '@/components/settings/section';
 import { api, ApiError } from '@/lib/api';
 import { keys, reportError } from '@/lib/queries';
-import { getSocket } from '@/lib/realtime';
+import { onRealtime } from '@/lib/realtime';
 
 type State =
   | { step: 'idle' }
@@ -78,18 +78,17 @@ export default function LinkDevicePage() {
   }, [state]);
 
   useEffect(() => {
-    const s = getSocket();
     const onClaim = (p: { pairingId: string; deviceName: string; platform: string; verificationCode: string }) =>
       setState((cur) => (cur.step === 'qr' && cur.pairing.pairingId === p.pairingId ? { step: 'claimed', pairing: cur.pairing, deviceName: p.deviceName, platform: p.platform, code: p.verificationCode } : cur));
     const onDone = () => {
       setState((cur) => ({ step: 'done', deviceName: cur.step === 'claimed' ? cur.deviceName : 'New device' }));
       qc.invalidateQueries({ queryKey: keys.devices });
     };
-    s?.on('pairing.claimed', onClaim);
-    s?.on('pairing.completed', onDone);
+    const offClaim = onRealtime('pairing.claimed', onClaim);
+    const offDone = onRealtime('pairing.completed', onDone);
     return () => {
-      s?.off('pairing.claimed', onClaim);
-      s?.off('pairing.completed', onDone);
+      offClaim();
+      offDone();
     };
   }, [qc]);
 

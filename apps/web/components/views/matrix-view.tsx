@@ -49,8 +49,9 @@ function Cell({ q, tasks, advanced }: { q: (typeof QUADRANTS)[number]; tasks: Ta
 
 function Draggable({ id, enabled, children }: { id: string; enabled: boolean; children: React.ReactNode }) {
   const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({ id, disabled: !enabled });
+  const { role: _role, tabIndex: _tab, 'aria-pressed': _pressed, 'aria-disabled': _disabled, ...aria } = attributes;
   return (
-    <li ref={setNodeRef} {...(enabled ? listeners : {})} {...(enabled ? attributes : {})} style={transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined} className={cn(isDragging && 'relative z-20 rounded-2xl bg-surface shadow-[var(--shadow-lift)]')}>
+    <li ref={setNodeRef} {...(enabled ? listeners : {})} {...(enabled ? aria : {})} style={transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined} className={cn(isDragging && 'relative z-20 rounded-2xl bg-surface shadow-[var(--shadow-lift)]')}>
       {children}
     </li>
   );

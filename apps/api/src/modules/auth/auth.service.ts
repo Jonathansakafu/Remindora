@@ -26,6 +26,7 @@ import { RateLimiter } from '../../common/rate-limit';
 import { RedisService } from '../../common/redis.service';
 import { ENV, KEYS, type Keys, type ServerEnv } from '../../config';
 import { RealtimeService } from '../../realtime/realtime.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface RequestMeta {
   ip: string | null;
@@ -59,16 +60,28 @@ export class AuthService {
     private readonly limiter: RateLimiter,
     private readonly redis: RedisService,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationsService,
     @Inject(ENV) private readonly env: ServerEnv,
     @Inject(KEYS) private readonly keys: Keys,
   ) {
-    this.email = createEmailSender({
+    const sender = createEmailSender({
       provider: env.EMAIL_PROVIDER,
       from: env.EMAIL_FROM,
       smtpUrl: env.SMTP_URL,
       resendApiKey: env.RESEND_API_KEY,
       log: (line) => this.logger.log(line),
     });
+    // Browser e2e tests read sign-in codes from Redis. Only ever active when NODE_ENV=test.
+    this.email =
+      env.NODE_ENV === 'test'
+        ? {
+            send: async (msg) => {
+              await this.redis.client.lpush(`test:mail:${msg.to}`, JSON.stringify({ subject: msg.subject, text: msg.text }));
+              await this.redis.client.expire(`test:mail:${msg.to}`, 600);
+              return sender.send(msg);
+            },
+          }
+        : sender;
   }
 
   private codeHash(challengeId: string, code: string) {
@@ -172,16 +185,14 @@ export class AuthService {
       });
       if (!won.count) throw Errors.gone('This sign-in request was already used', 'challenge_used');
       this.realtime.toUser(user.id, 'device.approval_requested', { challengeId: ch.id, deviceName: device.name, platform: device.platform, ipCountry: null });
-      await this.prisma.notification.create({
-        data: {
-          userId: user.id,
-          kind: 'DEVICE_APPROVAL',
-          priority: 'HIGH',
-          title: 'Approve new sign-in?',
-          body: `${device.name} (${device.platform.toLowerCase()}) is trying to sign in.`,
-          data: { challengeId: ch.id },
-          dedupeKey: `approval:${ch.id}`,
-        },
+      await this.notifications.createInApp(user.id, {
+        kind: 'DEVICE_APPROVAL',
+        priority: 'HIGH',
+        title: 'Approve new sign-in?',
+        body: `${device.name} (${device.platform.toLowerCase()}) is trying to sign in.`,
+        data: { challengeId: ch.id },
+        dedupeKey: `approval:${ch.id}`,
+        push: true,
       });
       await this.audit.log({ action: 'auth.email.awaiting_approval', actorId: user.id, ip: meta.ip, targetId: ch.id });
       return { status: 'awaiting_approval' as const, challengeId: ch.id };

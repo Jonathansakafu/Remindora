@@ -5,7 +5,7 @@ import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, reportError, useNotifications } from '@/lib/queries';
-import { getSocket } from '@/lib/realtime';
+import { onRealtime } from '@/lib/realtime';
 
 /** "Approve new sign-in?" — sensitive email sign-ins wait for confirmation from a signed-in device. */
 export function ApprovalBanner() {
@@ -14,12 +14,7 @@ export function ApprovalBanner() {
   const [live, setLive] = useState<{ challengeId: string; deviceName: string; platform: string } | null>(null);
   const pending = data?.items.find((n) => n.kind === 'DEVICE_APPROVAL' && !n.acknowledgedAt);
 
-  useEffect(() => {
-    const s = getSocket();
-    const handler = (p: { challengeId: string; deviceName: string; platform: string }) => setLive(p);
-    s?.on('device.approval_requested', handler);
-    return () => void s?.off('device.approval_requested', handler);
-  }, []);
+  useEffect(() => onRealtime('device.approval_requested', (p) => setLive(p)), []);
 
   const challengeId = live?.challengeId ?? (pending?.data.challengeId as string | undefined) ?? null;
   if (!live && !pending) return null;

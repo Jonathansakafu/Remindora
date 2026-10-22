@@ -4,7 +4,7 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities';
 import { cn, EmptyState } from '@remindora/ui';
 import type { ProjectDTO, TaskDTO } from '@remindora/types';
-import { ChevronRight, Plus, Sparkles } from 'lucide-react';
+import { ChevronRight, GripVertical, Plus, Sparkles } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useMemo, useState } from 'react';
 import { inZone } from '@/lib/dates';
@@ -62,17 +62,21 @@ function groupTasks(tasks: TaskDTO[], grouping: Grouping, tz: string, project?: 
   return Object.values(buckets).filter((g) => g.tasks.length);
 }
 
+/** Sortable row with a dedicated, labelled drag handle (keyboard: focus handle, Space to pick up, arrows, Space to drop). */
 function SortableRow({ task, children }: { task: TaskDTO; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   return (
-    <li
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && 'relative z-10 scale-[1.01] rounded-2xl shadow-[var(--shadow-lift)]')}
-      {...attributes}
-      {...listeners}
-      aria-roledescription="sortable task"
-    >
+    <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={cn('group/sort relative', isDragging && 'z-10 scale-[1.01] rounded-2xl shadow-[var(--shadow-lift)]')}>
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${task.title}`}
+        className="absolute -left-4 top-3 hidden h-6 w-4 cursor-grab place-items-center rounded text-ink-faint opacity-0 hover:text-ink focus:opacity-100 group-hover/sort:opacity-100 md:grid"
+      >
+        <GripVertical size={14} />
+      </button>
       {children}
     </li>
   );

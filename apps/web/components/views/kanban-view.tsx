@@ -33,9 +33,12 @@ const magnetic: CollisionDetection = (args) => {
 };
 
 function Card({ task, project, members }: { task: TaskDTO; project?: ProjectDTO; members: Map<string, { name: string | null; email: string }> }) {
+  // Pointer drag on the whole card; the inner task button stays the single accessible control
+  // (keyboard users change section/status from the task panel).
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
+  const { role: _role, tabIndex: _tab, 'aria-pressed': _pressed, 'aria-disabled': _disabled, ...aria } = attributes;
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners} className={cn('glass rounded-2xl transition-opacity', isDragging && 'opacity-30')} aria-roledescription="draggable card">
+    <div ref={setNodeRef} {...aria} {...listeners} className={cn('glass cursor-grab rounded-2xl transition-opacity', isDragging && 'opacity-30')}>
       <TaskRow task={task} project={project} members={members} />
     </div>
   );
