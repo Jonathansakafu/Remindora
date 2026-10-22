@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "prebuild": "expo prebuild --platform android",
-    "build:android": "eas build --platform android"
+    "build:android": "eas build --platform android",
+    "eas-build-post-install": "cd ../.. && npx turbo run build --filter=@remindora/types --filter=@remindora/core --filter=@remindora/notifications"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",
