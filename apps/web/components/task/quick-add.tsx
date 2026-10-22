@@ -152,7 +152,7 @@ export function QuickAdd() {
             <Kbd>#</Kbd> tag <Kbd>!</Kbd> priority <Kbd>~</Kbd> list <Kbd>@</Kbd> assignee
           </span>
           <Button variant="primary" size="sm" className="ml-auto" onClick={submit} disabled={!parsed || busy}>
-            {busy ? <Spinner size={14} className="text-[#06122e]" /> : 'Add task'}
+            {busy ? <Spinner size={14} className="text-on-accent" /> : 'Add task'}
           </Button>
         </div>
       </DialogContent>

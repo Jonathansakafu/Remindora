@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.56.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/luxon": "^3.7.6",

@@ -195,7 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {mobileTabs.slice(0, 2).map((t) => (
           <MobileTab key={t.href} {...t} active={pathname.startsWith(t.href)} />
         ))}
-        <button type="button" onClick={() => ui.setQuickAdd(true)} className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan text-[#06122e] shadow-[0_8px_24px_-6px_rgb(96_233_255/0.7)]" aria-label="Add task">
+        <button type="button" onClick={() => ui.setQuickAdd(true)} className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan text-on-accent shadow-[0_8px_24px_-6px_rgb(96_233_255/0.7)]" aria-label="Add task">
           <Plus size={22} />
         </button>
         {mobileTabs.slice(2).map((t) => (

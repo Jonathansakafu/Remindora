@@ -87,7 +87,7 @@ export default function ProfileSettings() {
 
       <Section title="Keyboard shortcuts">
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-          {[[['N'], 'Quick add'], [['⌘', 'K'], 'Command palette'], [['/'], 'Search'], [['G', 'T'], 'Go to Today'], [['G', 'I'], 'Go to Inbox'], [['G', 'C'], 'Go to Calendar'], [['Space'], 'Complete focused task'], [['Enter'], 'Open focused task'], [['X'], 'Select for bulk actions'], [['Esc'], 'Close panel / clear selection']].map(([k, label]) => (
+          {[[['N'], 'Quick add'], [['⌘', 'K'], 'Command palette'], [['/'], 'Search'], [['G', 'T'], 'Go to Today'], [['G', 'I'], 'Go to Inbox'], [['G', 'C'], 'Go to Calendar'], [['C'], 'Complete focused task'], [['Enter'], 'Open focused task'], [['X'], 'Select for bulk actions'], [['Esc'], 'Close panel / clear selection']].map(([k, label]) => (
             <div key={label as string} className="flex items-center justify-between gap-3 border-b border-line/50 py-1.5">
               <dt className="text-ink-muted">{label}</dt>
               <dd className="flex gap-1">{(k as string[]).map((x) => <Kbd key={x}>{x}</Kbd>)}</dd>

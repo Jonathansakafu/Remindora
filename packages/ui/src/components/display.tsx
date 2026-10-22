@@ -73,7 +73,7 @@ export function TaskCheck({ checked, onChange, priority = 'NONE', label, disable
       )}
       style={{ borderColor: checked ? 'transparent' : color, background: checked ? color : `${color}14` }}
     >
-      {checked && <Check size={13} strokeWidth={3} className={cn('text-[#06122e]', !reduced && '[stroke-dasharray:24] [animation:draw_0.25s_ease-out]')} />}
+      {checked && <Check size={13} strokeWidth={3} className={cn('text-on-accent', !reduced && '[stroke-dasharray:24] [animation:draw_0.25s_ease-out]')} />}
       {burst > 0 && !reduced && (
         <span key={burst} aria-hidden className="pointer-events-none absolute inset-0">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -103,7 +103,7 @@ export function Avatar({ name, src, size = 28, className }: { name: string | nul
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt="" width={size} height={size} className={cn('rounded-full object-cover ring-1 ring-line-strong', className)} />
   ) : (
-    <span aria-hidden className={cn('inline-grid place-items-center rounded-full font-semibold text-[#06122e] ring-1 ring-white/20', className)} style={{ width: size, height: size, fontSize: size * 0.38, background: `hsl(${hue} 85% 78%)` }}>
+    <span aria-hidden className={cn('inline-grid place-items-center rounded-full font-semibold text-on-accent ring-1 ring-white/20', className)} style={{ width: size, height: size, fontSize: size * 0.38, background: `hsl(${hue} 85% 78%)` }}>
       {initials}
     </span>
   );

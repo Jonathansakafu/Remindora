@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-theme="observatory" className={`${inter.variable} ${grotesk.variable}`} suppressHydrationWarning>
       <body>
-        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-cyan focus:px-3 focus:py-2 focus:text-[#06122e]">
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-cyan focus:px-3 focus:py-2 focus:text-on-accent">
           Skip to content
         </a>
         <Providers>{children}</Providers>

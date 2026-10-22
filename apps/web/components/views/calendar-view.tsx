@@ -120,7 +120,7 @@ function MonthCell({ day, inMonth, today, children, onOpen }: { day: DateTime; i
   const { setNodeRef, isOver } = useDroppable({ id: `day:${day.toISODate()}` });
   return (
     <div ref={setNodeRef} className={cn('min-h-[104px] border-b border-l border-line/60 p-1', !inMonth && 'bg-black/10 opacity-60', isOver && 'bg-cyan/[0.07]')}>
-      <button type="button" onClick={onOpen} className={cn('mb-1 grid h-6 w-6 place-items-center rounded-full text-xs', today ? 'bg-cyan font-bold text-[#06122e]' : 'text-ink-muted hover:bg-white/5')} aria-label={day.toFormat('cccc d LLLL')}>
+      <button type="button" onClick={onOpen} className={cn('mb-1 grid h-6 w-6 place-items-center rounded-full text-xs', today ? 'bg-cyan font-bold text-on-accent' : 'text-ink-muted hover:bg-white/5')} aria-label={day.toFormat('cccc d LLLL')}>
         {day.day}
       </button>
       <div className="space-y-0.5">{children}</div>
@@ -247,7 +247,7 @@ export function CalendarView({ projectId }: { projectId?: string }) {
                 {dayList.map((d) => (
                   <div key={d.toISODate()} className="border-l border-line/70 px-2 py-2 text-center">
                     <div className="text-[11px] uppercase tracking-wider text-ink-faint">{d.toFormat('ccc')}</div>
-                    <div className={cn('mx-auto mt-0.5 grid h-7 w-7 place-items-center rounded-full font-display text-sm', d.hasSame(now, 'day') && 'bg-cyan font-bold text-[#06122e]')}>{d.day}</div>
+                    <div className={cn('mx-auto mt-0.5 grid h-7 w-7 place-items-center rounded-full font-display text-sm', d.hasSame(now, 'day') && 'bg-cyan font-bold text-on-accent')}>{d.day}</div>
                   </div>
                 ))}
                 <div className="px-1 py-1 text-right text-[10px] text-ink-faint">all-day</div>
@@ -348,7 +348,7 @@ export function CalendarView({ projectId }: { projectId?: string }) {
                             key={i}
                             type="button"
                             onClick={() => (setAnchor(d), setMode('day'))}
-                            className={cn('grid aspect-square place-items-center rounded-md text-[10px]', d.hasSame(now, 'day') ? 'bg-cyan font-bold text-[#06122e]' : 'text-ink-muted hover:bg-white/5')}
+                            className={cn('grid aspect-square place-items-center rounded-md text-[10px]', d.hasSame(now, 'day') ? 'bg-cyan font-bold text-on-accent' : 'text-ink-muted hover:bg-white/5')}
                             style={n && !d.hasSame(now, 'day') ? { background: `rgb(96 233 255 / ${Math.min(0.15 + n * 0.12, 0.6)})`, color: 'var(--color-ink)' } : undefined}
                             aria-label={`${d.toFormat('d LLLL')}: ${n} tasks`}
                           >

@@ -15,6 +15,8 @@
   --color-amber: #ffbc5c;
   --color-danger: #ff7a93;
   --color-success: #7cf3b0;
+  /* Text/icons drawn on cyan/amber accent fills. */
+  --color-on-accent: #06122e;
   --color-p-critical: #ff7a93;
   --color-p-high: #ffbc5c;
   --color-p-medium: #60e9ff;
@@ -56,6 +58,7 @@
   --color-amber: #a05e00;
   --color-danger: #c42a4b;
   --color-success: #177a4c;
+  --color-on-accent: #ffffff;
 }
 
 @layer base {

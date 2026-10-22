@@ -132,7 +132,7 @@ function LoginInner() {
             </p>
           )}
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy || code.length !== 6}>
-            {busy ? <Spinner className="text-[#06122e]" /> : 'Sign in'}
+            {busy ? <Spinner className="text-on-accent" /> : 'Sign in'}
           </Button>
           <button type="button" className="w-full text-center text-sm text-ink-muted hover:text-ink" onClick={() => setStep({ kind: 'email' })}>
             Use a different email
@@ -155,7 +155,7 @@ function LoginInner() {
           </p>
         )}
         <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy || !email}>
-          {busy ? <Spinner className="text-[#06122e]" /> : (<><Mail size={16} /> Email me a sign-in code</>)}
+          {busy ? <Spinner className="text-on-accent" /> : (<><Mail size={16} /> Email me a sign-in code</>)}
         </Button>
       </form>
       {providers.length > 0 && (

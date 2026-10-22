@@ -12,7 +12,7 @@ test('creates a task with natural-language Quick Add', async ({ page }) => {
   await page.keyboard.press('Enter');
   const row = page.getByRole('button', { name: /^Submit report, due/ });
   await expect(row).toBeVisible();
-  await expect(row.getByText('#work')).toBeVisible();
+  await expect(page.locator('[data-task-id]').filter({ has: row }).getByText('#work')).toBeVisible();
   await row.click();
   await expect(page.getByLabel('Task title')).toHaveValue('Submit report');
   await expect(page.getByRole('combobox', { name: 'Repeat' })).toHaveValue('FREQ=WEEKLY;BYDAY=FR');

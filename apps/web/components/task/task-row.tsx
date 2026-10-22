@@ -23,23 +23,13 @@ export const TaskRow = memo(function TaskRow({ task, project, showProject, membe
   const assignee = task.assigneeId ? members?.get(task.assigneeId) : undefined;
   const blocked = task.dependsOn.length > 0;
 
+  const open = (e: React.MouseEvent | React.KeyboardEvent) => ('metaKey' in e && (e.metaKey || e.ctrlKey || e.shiftKey) ? toggleSelection(task.id) : select(task.id));
+
+  // The row is a mouse convenience only; the accessible controls are the checkbox and the title button (siblings, not nested).
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-label={`${task.title}${due ? `, due ${due.text}` : ''}${done ? ', completed' : ''}`}
-      aria-pressed={selected}
       data-task-id={task.id}
-      onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleSelection(task.id) : select(task.id))}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter') select(task.id);
-        if (e.key === ' ' && !readOnly) {
-          e.preventDefault();
-          complete.mutate({ task, done: !done });
-        }
-        if (e.key === 'x') toggleSelection(task.id);
-      }}
+      onClick={open}
       className={cn(
         'group relative flex cursor-pointer items-start gap-3 rounded-2xl border border-transparent px-3 transition-[background,border-color,transform,opacity] duration-200 hover:bg-white/[0.035]',
         compact ? 'py-2' : 'py-2.5',
@@ -53,7 +43,25 @@ export const TaskRow = memo(function TaskRow({ task, project, showProject, membe
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className={cn('truncate text-[14.5px] leading-6 text-ink', done && 'line-through decoration-ink-faint')}>{task.title}</span>
+          <button
+            type="button"
+            aria-label={`${task.title}${due ? `, due ${due.text}` : ''}${done ? ', completed' : ''}`}
+            aria-pressed={selected}
+            onClick={(e) => {
+              e.stopPropagation();
+              open(e);
+            }}
+            onKeyDown={(e) => {
+              if ((e.key === 'c' || e.key === 'C') && !readOnly) {
+                e.preventDefault();
+                complete.mutate({ task, done: !done });
+              }
+              if (e.key === 'x') toggleSelection(task.id);
+            }}
+            className={cn('truncate text-left text-[14.5px] leading-6 text-ink focus-visible:outline-offset-4', done && 'line-through decoration-ink-faint')}
+          >
+            {task.title}
+          </button>
           {task.isFavorite && <Star size={12} className="shrink-0 fill-amber text-amber" aria-label="Favorite" />}
         </div>
         {!compact && (
