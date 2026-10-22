@@ -13,6 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Remindora',
   slug: 'remindora',
+  owner: 'jonathansakafu',
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
@@ -65,6 +66,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: { typedRoutes: false, reactCompiler: false },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:4000',
-    eas: { projectId: process.env.EAS_PROJECT_ID },
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? '84a6617c-4280-4c99-83a5-4ec13c5b5374' },
   },
 });
