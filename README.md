@@ -255,6 +255,7 @@ What was run and verified while building this:
 What needs your credentials or devices, and hasn't been exercised end to end:
 
 - ⚠️ **Android on a device.** No APK was built here (no Android SDK on this machine). Test push delivery (FCM), action buttons, the widget, biometrics and camera scanning on a real phone after `eas build`.
+- ⚠️ **Android notification action buttons.** Complete/Snooze/Stop buttons appear inline when push goes through the Expo push service (category actions). Direct FCM sends system-displayed notification messages, which survive aggressive OEM battery management, but they show no inline buttons: tapping opens the app, where the actions are one tap away. Switching FCM to data-only messages rendered by the app would add the buttons, at some cost to reliability on those OEMs.
 - ⚠️ **Third-party services.** FCM, Web Push (VAPID), Stripe checkout and webhooks, OAuth providers, Google/Outlook/Notion import and export, S3, Resend/SMTP and the Anthropic provider are implemented against their documented APIs but need real credentials to verify.
 - ⚠️ **Windows and Linux desktop bundles** come from the same config and code but were only built for macOS here. CI runs `cargo check` on macOS.
 - ⚠️ **Docker images** weren't built locally (no Docker). The Next standalone output they depend on was verified.
