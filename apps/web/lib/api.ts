@@ -1,5 +1,5 @@
 'use client';
-import { API_URL } from './config';
+import { API_URL, AUTH_URL } from './config';
 import { refreshSession, useSession } from './session';
 
 export class ApiError extends Error {
@@ -38,7 +38,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
     const { accessToken, expiresAt } = useSession.getState();
     if (init.auth !== false && accessToken && expiresAt - Date.now() < 30_000) await refreshSession();
     const token = useSession.getState().accessToken;
-    return fetch(`${API_URL}${path}${qs(init.query)}`, {
+    return fetch(`${path.startsWith('/auth/') ? AUTH_URL : API_URL}${path}${qs(init.query)}`, {
       method: init.method ?? (init.body !== undefined ? 'POST' : 'GET'),
       credentials: 'include',
       signal: init.signal,

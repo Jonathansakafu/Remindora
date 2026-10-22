@@ -26,6 +26,8 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@remindora/ui'],
+  // *.web.ts(x) files (the /auth proxy) only exist in server builds, never the static desktop export.
+  pageExtensions: isDesktop ? ['tsx', 'ts'] : ['tsx', 'ts', 'web.ts'],
   // Static export for the desktop shell; standalone server bundle for Docker/Render.
   output: isDesktop ? 'export' : process.env.BUILD_STANDALONE === '1' ? 'standalone' : undefined,
   outputFileTracingRoot: join(__dirname, '../..'),

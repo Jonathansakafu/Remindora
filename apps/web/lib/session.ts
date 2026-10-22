@@ -1,7 +1,7 @@
 'use client';
 import type { AuthTokensDTO, UserDTO } from '@remindora/types';
 import { create } from 'zustand';
-import { API_URL } from './config';
+import { AUTH_URL } from './config';
 import { isTauri, secureStore } from './platform';
 
 const REFRESH_KEY = 'remindora.refresh';
@@ -47,7 +47,7 @@ export function refreshSession(): Promise<boolean> {
       const native = isTauri();
       const refreshToken = native ? await secureStore.get(REFRESH_KEY) : null;
       if (native && !refreshToken) return false;
-      const res = await fetch(`${API_URL}/auth/refresh`, {
+      const res = await fetch(`${AUTH_URL}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-remindora-csrf': '1' },
