@@ -88,6 +88,13 @@ export class WorkspacesController {
     return this.workspaces.accept(a.userId, body.token);
   }
 
+  @Post('invites/:id/accept')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Accept an invite from the in-app notification (email must match)' })
+  acceptById(@Auth() a: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.workspaces.acceptById(a.userId, id);
+  }
+
   @Get('workspaces/:id/audit')
   @ApiOperation({ summary: 'Security audit log (owners/admins)' })
   audit(@Auth() a: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Query('limit') limit?: string) {

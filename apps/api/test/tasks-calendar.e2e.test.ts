@@ -121,9 +121,8 @@ describe('workspace permissions', () => {
 
     const notifs = await h.prisma.notification.findMany({ where: { kind: 'INVITE', userId: { in: [member.user.id, viewer.user.id] } } });
     for (const n of notifs) {
-      const token = (n.data as { token: string }).token;
       const who = n.userId === member.user.id ? member : viewer;
-      await h.http().post('/invites/accept').set(auth(who.accessToken)).send({ token }).expect(200);
+      await h.http().post(`/invites/${(n.data as { inviteId: string }).inviteId}/accept`).set(auth(who.accessToken)).expect(200);
     }
 
     const task = await h.http().post('/tasks').set(auth(member.accessToken)).send({ title: 'Member task', projectId: project.body.id }).expect(201);
@@ -230,5 +229,22 @@ describe('calendar scheduling', () => {
     await h.http().get('/calendar').query({ from, to, view: 'month' }).set(auth(u.accessToken)).expect(200);
     const year = await h.http().get('/calendar').query({ from, to, view: 'year' }).set(auth(u.accessToken));
     expect(year.status).toBe(402);
+  });
+});
+
+describe('invite links', () => {
+  it('accepts via the emailed token link, single use, email-bound', async () => {
+    const owner2 = await signIn(h, uniqueEmail('inv-owner'));
+    const ws = await h.http().post('/workspaces').set(auth(owner2.accessToken)).send({ name: 'Linkers' }).expect(201);
+    const email = uniqueEmail('inv-guest');
+    const guest = await signIn(h, email);
+    await h.http().post(`/workspaces/${ws.body.id}/invites`).set(auth(owner2.accessToken)).send({ email, role: 'MEMBER' }).expect(201);
+    const token = h.outbox.filter((m) => m.to === email).pop()!.text.match(/invite\?t=([\w-]+)/)![1]!;
+    const stranger = await signIn(h, uniqueEmail('inv-stranger'));
+    await h.http().post('/invites/accept').set(auth(stranger.accessToken)).send({ token }).expect(403);
+    await h.http().post('/invites/accept').set(auth(guest.accessToken)).send({ token }).expect(200);
+    await h.http().post('/invites/accept').set(auth(guest.accessToken)).send({ token }).expect(410);
+    const notif = await h.prisma.notification.findFirstOrThrow({ where: { userId: guest.user.id, kind: 'INVITE' } });
+    expect(JSON.stringify(notif.data)).not.toContain(token);
   });
 });

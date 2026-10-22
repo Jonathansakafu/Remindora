@@ -16,7 +16,7 @@ import { ReminderScheduler } from './reminder-scheduler.service';
 import { taskInclude, toTaskDTO } from './task.mapper';
 
 const SANITIZE: sanitizeHtml.IOptions = {
-  allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'hr', 'span', 'input', 'label'],
+  allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'hr', 'span', 'div', 'input', 'label'],
   allowedAttributes: { a: ['href', 'target', 'rel'], input: ['type', 'checked', 'disabled'], li: ['data-checked', 'data-type'], ul: ['data-type'] },
   allowedSchemes: ['http', 'https', 'mailto'],
   transformTags: { a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' }) },

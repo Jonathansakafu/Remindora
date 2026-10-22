@@ -140,7 +140,7 @@ export class WorkspacesService {
     const invitee = await this.prisma.user.findUnique({ where: { email } });
     if (invitee) {
       await this.prisma.notification.create({
-        data: { userId: invitee.id, kind: 'INVITE', priority: 'MEDIUM', title: `Invitation to ${ws.name}`, body: `${inviter.name ?? inviter.email} invited you as ${role.toLowerCase()}.`, data: { inviteId: invite.id, token }, dedupeKey: `invite:${invite.id}` },
+        data: { userId: invitee.id, kind: 'INVITE', priority: 'MEDIUM', title: `Invitation to ${ws.name}`, body: `${inviter.name ?? inviter.email} invited you as ${role.toLowerCase()}.`, data: { inviteId: invite.id, workspaceName: ws.name }, dedupeKey: `invite:${invite.id}` },
       });
     }
     await this.audit.log({ action: 'member.invited', actorId: userId, workspaceId: id, targetType: 'invite', targetId: invite.id, metadata: { email, role } });
@@ -162,7 +162,16 @@ export class WorkspacesService {
   }
 
   async accept(userId: string, token: string) {
-    const invite = await this.prisma.invite.findUnique({ where: { tokenHash: sha256(token) }, include: { workspace: true } });
+    return this.acceptWhere(userId, { tokenHash: sha256(token) });
+  }
+
+  /** In-app acceptance: the signed-in invitee (matching email) accepts by id, no token needed. */
+  async acceptById(userId: string, inviteId: string) {
+    return this.acceptWhere(userId, { id: inviteId });
+  }
+
+  private async acceptWhere(userId: string, where: { tokenHash: string } | { id: string }) {
+    const invite = await this.prisma.invite.findUnique({ where: where as { id: string }, include: { workspace: true } });
     if (!invite || invite.revokedAt || invite.workspace.deletedAt) throw Errors.notFound('Invite');
     if (invite.acceptedAt) throw Errors.gone('Invite already used', 'invite_used');
     if (invite.expiresAt.getTime() <= Date.now()) throw Errors.gone('Invite expired', 'invite_expired');

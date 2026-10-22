@@ -193,6 +193,8 @@ export interface NotificationDTO {
   acknowledgedAt: string | null;
   createdAt: string;
   actions: Array<'snooze' | 'complete' | 'reschedule' | 'stop' | 'open'>;
+  /** Kind-specific payload (e.g. { challengeId } for DEVICE_APPROVAL). Never contains secrets. */
+  data: Record<string, unknown>;
 }
 
 export interface NotificationPreferenceDTO {
@@ -208,6 +210,7 @@ export interface NotificationPreferenceDTO {
   quietEnd: string;
   criticalBypassQuietHours: boolean;
   weekendsEnabled: boolean;
+  lowPriorityMode: 'inbox' | 'digest';
   morningDigestEnabled: boolean;
   morningDigestTime: string;
   eveningPlanningEnabled: boolean;

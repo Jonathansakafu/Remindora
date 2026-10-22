@@ -1,0 +1,9 @@
+{
+  "name": "Remindora",
+  "short_name": "Remindora",
+  "start_url": "/app/today",
+  "display": "standalone",
+  "background_color": "#070D22",
+  "theme_color": "#070D22",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

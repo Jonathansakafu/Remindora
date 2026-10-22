@@ -4,7 +4,7 @@ import { useEffect, useId, useState, type HTMLAttributes, type ReactNode } from 
 import { cn } from '../cn';
 import { priorityMeta, type PriorityKey } from '../tokens';
 
-export function GlassPanel({ className, strong, glow, ...props }: HTMLAttributes<HTMLDivElement> & { strong?: boolean; glow?: boolean }) {
+export function GlassPanel({ className, strong, glow, ...props }: React.ComponentProps<'div'> & { strong?: boolean; glow?: boolean }) {
   return <div className={cn(strong ? 'glass-strong' : 'glass', 'rounded-[var(--radius-glass)]', glow && 'luminous-border', className)} {...props} />;
 }
 

@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import '@remindora/ui/styles.css';
+@source '../../../packages/ui/src';
+
+@layer components {
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(168 239 255 / 0.18) transparent;
+  }
+  .prose-task :where(p) { margin: 0.35em 0; }
+  .prose-task :where(ul, ol) { padding-left: 1.25em; margin: 0.35em 0; }
+  .prose-task :where(ul) { list-style: disc; }
+  .prose-task :where(ol) { list-style: decimal; }
+  .prose-task :where(ul[data-type='taskList']) { list-style: none; padding-left: 0; }
+  .prose-task :where(ul[data-type='taskList'] li) { display: flex; gap: 0.5em; align-items: flex-start; }
+  .prose-task :where(a) { color: var(--color-cyan); text-decoration: underline; }
+  .prose-task :where(code) { background: rgb(168 239 255 / 0.08); border-radius: 4px; padding: 0 4px; font-size: 0.9em; }
+  .prose-task :where(blockquote) { border-left: 2px solid var(--color-line-strong); padding-left: 0.75em; color: var(--color-ink-muted); }
+  .prose-task :where(h1, h2, h3) { font-family: var(--font-display); font-weight: 600; margin: 0.6em 0 0.3em; }
+  .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--color-ink-faint); float: left; height: 0; pointer-events: none; }
+}

@@ -5,6 +5,12 @@ import { realtimeRooms, type NotificationChannel, type NotificationDTO } from '@
 import type { Deps } from '../deps';
 import { PushError, type PushMessage } from './push';
 
+/** Strips secret-bearing fields (invite tokens) before sending a notification to clients. */
+function publicData(data: unknown): Record<string, unknown> {
+  const { token: _token, ...rest } = (data ?? {}) as Record<string, unknown>;
+  return rest;
+}
+
 export function toNotificationDTO(n: Notification): NotificationDTO {
   return {
     id: n.id,
@@ -17,6 +23,7 @@ export function toNotificationDTO(n: Notification): NotificationDTO {
     readAt: n.readAt?.toISOString() ?? null,
     acknowledgedAt: n.acknowledgedAt?.toISOString() ?? null,
     createdAt: n.createdAt.toISOString(),
+    data: publicData(n.data),
     actions: n.kind === 'REMINDER' && n.reminderId ? ['complete', 'snooze', 'reschedule', 'stop', 'open'] : n.taskId ? ['open'] : [],
   };
 }

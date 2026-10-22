@@ -220,7 +220,7 @@ describe('cross-device sync', () => {
     const invite = await h.prisma.notification.findFirstOrThrow({ where: { userId: b.user.id, kind: 'INVITE' } });
     const bSocket = await connectSocket(h, b.accessToken);
     const outSocket = await connectSocket(h, outsider.accessToken);
-    await h.http().post('/invites/accept').set(auth(b.accessToken)).send({ token: (invite.data as { token: string }).token }).expect(200);
+    await h.http().post(`/invites/${(invite.data as { inviteId: string }).inviteId}/accept`).set(auth(b.accessToken)).expect(200);
 
     let leaked = false;
     outSocket.on('task.upserted', () => (leaked = true));

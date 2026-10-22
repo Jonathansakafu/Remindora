@@ -9,6 +9,12 @@ import { PrismaService } from '../../common/prisma.service';
 import { QueueService } from '../../queues/queue.service';
 import { RealtimeService } from '../../realtime/realtime.service';
 
+/** Strips secret-bearing fields (invite tokens) before sending a notification to clients. */
+function publicData(data: unknown): Record<string, unknown> {
+  const { token: _token, ...rest } = (data ?? {}) as Record<string, unknown>;
+  return rest;
+}
+
 export function toNotificationDTO(n: Notification): NotificationDTO {
   const isReminder = n.kind === 'REMINDER' && n.reminderId;
   return {
@@ -22,6 +28,7 @@ export function toNotificationDTO(n: Notification): NotificationDTO {
     readAt: n.readAt?.toISOString() ?? null,
     acknowledgedAt: n.acknowledgedAt?.toISOString() ?? null,
     createdAt: n.createdAt.toISOString(),
+    data: publicData(n.data),
     actions: isReminder ? ['complete', 'snooze', 'reschedule', 'stop', 'open'] : n.taskId ? ['open'] : [],
   };
 }
@@ -172,6 +179,7 @@ export class NotificationsService {
       quietEnd: pref.quietEnd,
       criticalBypassQuietHours: pref.criticalBypassQuietHours,
       weekendsEnabled: pref.weekendsEnabled,
+      lowPriorityMode: pref.lowPriorityMode as 'inbox' | 'digest',
       morningDigestEnabled: pref.morningDigestEnabled,
       morningDigestTime: pref.morningDigestTime,
       eveningPlanningEnabled: pref.eveningPlanningEnabled,
