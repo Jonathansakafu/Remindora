@@ -5,6 +5,8 @@ import { existsSync } from 'fs';
  * Remindora for Android. Set EXPO_PUBLIC_API_URL for the API, and provide
  * google-services.json (or GOOGLE_SERVICES_JSON on EAS) to enable FCM push.
  */
+// Local-network builds talk to the API over plain HTTP; Android needs that allowed explicitly.
+const insecureApi = (process.env.EXPO_PUBLIC_API_URL ?? '').startsWith('http://');
 const googleServicesFile = process.env.GOOGLE_SERVICES_JSON ?? (existsSync('./google-services.json') ? './google-services.json' : undefined);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
@@ -35,6 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
+    ['expo-build-properties', { android: { usesCleartextTraffic: insecureApi } }],
     'expo-secure-store',
     ['expo-splash-screen', { backgroundColor: '#070D22', image: './assets/images/splash-icon.png', imageWidth: 120 }],
     ['expo-notifications', { icon: './assets/images/notification-icon.png', color: '#60E9FF', defaultChannel: 'remindora-default' }],

@@ -1,9 +1,49 @@
 {
-  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
-  "build": {
-    "development": { "developmentClient": true, "distribution": "internal", "android": { "buildType": "apk" } },
-    "preview": { "distribution": "internal", "android": { "buildType": "apk" }, "env": { "EXPO_PUBLIC_API_URL": "https://api.remindora.app" } },
-    "production": { "autoIncrement": true, "android": { "buildType": "app-bundle" }, "env": { "EXPO_PUBLIC_API_URL": "https://api.remindora.app" } }
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
-  "submit": { "production": { "android": { "track": "internal" } } }
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.remindora.app"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.remindora.app"
+      }
+    },
+    "lan": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://192.168.1.8:4000"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
+  }
 }
