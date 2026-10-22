@@ -1,0 +1,19 @@
+{
+  "name": "@remindora/entitlements",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@remindora/types": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "vitest": "3.2.4"
+  }
+}
