@@ -3,6 +3,12 @@
 <h1 align="center">Remindora</h1>
 <p align="center">Personal and team task management for Web, Desktop and Android: capture instantly, plan your time, build habits, focus deeply, and get priority-aware reminders on every device.</p>
 
+<p align="center">
+  <a href="https://web-production-d1f465.up.railway.app"><b>Open the live app</b></a> ·
+  <a href="https://api-production-1921.up.railway.app/docs">API docs</a> ·
+  <a href="https://portfolio-seven-dun-d8pz65t7l6.vercel.app">Built by Jonathan Sakafu</a>
+</p>
+
 ![Today view](docs/screenshots/02-today.png)
 
 | | | |
