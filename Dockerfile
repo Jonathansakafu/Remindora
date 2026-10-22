@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1.7
+# SERVICE picks the final stage when the platform can't pass --target (e.g. Railway): api | workers | web
+ARG SERVICE=api
 # Multi-stage build for the Remindora backend services and web app.
 #   docker build --target api     -t remindora-api .
 #   docker build --target workers -t remindora-workers .
@@ -32,8 +34,8 @@ COPY --from=build /app /app
 WORKDIR /app/apps/api
 USER node
 EXPOSE 4000
-# Migrations run as a release step (see render.yaml / README), not on every boot.
-CMD ["node", "--enable-source-maps", "dist/main.js"]
+# Migrations run as a release step (see render.yaml / README). Platforms without one set MIGRATE_ON_START=true.
+CMD ["sh", "-c", "if [ \"$MIGRATE_ON_START\" = true ]; then (cd /app/packages/database && node /app/node_modules/prisma/build/index.js migrate deploy) || exit 1; fi; exec node --enable-source-maps dist/main.js"]
 
 # ── Workers ──
 FROM base AS workers
@@ -53,3 +55,6 @@ COPY --from=build /app/apps/web/public ./apps/web/public
 USER node
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]
+
+# ── Default final stage, chosen by SERVICE ──
+FROM ${SERVICE} AS final

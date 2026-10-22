@@ -67,7 +67,8 @@ export const serverEnvSchema = z.object({
   S3_FORCE_PATH_STYLE: bool,
   MAX_ATTACHMENT_BYTES: z.coerce.number().int().default(25 * 1024 * 1024),
 
-  BILLING_PROVIDER: z.enum(['dev', 'stripe']).default('dev'),
+  /** none = plans are visible but checkout is disabled (production without a payment provider). */
+  BILLING_PROVIDER: z.enum(['dev', 'stripe', 'none']).default('dev'),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_PREMIUM_MONTHLY: z.string().optional(),

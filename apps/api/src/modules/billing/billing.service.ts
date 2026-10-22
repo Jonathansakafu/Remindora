@@ -7,7 +7,7 @@ import { Errors } from '../../common/errors';
 import { PrismaService } from '../../common/prisma.service';
 import { ENV, type ServerEnv } from '../../config';
 import { RealtimeService } from '../../realtime/realtime.service';
-import { DevBillingProvider, StripeBillingProvider, type BillingProvider, type Interval, type NormalizedSubscription } from './providers';
+import { DevBillingProvider, DisabledBillingProvider, StripeBillingProvider, type BillingProvider, type Interval, type NormalizedSubscription } from './providers';
 
 export const PRICES = {
   PREMIUM: { month: 4.99, year: 35.99, currency: 'USD' },
@@ -26,7 +26,12 @@ export class BillingService {
     private readonly audit: AuditService,
     @Inject(ENV) private readonly env: ServerEnv,
   ) {
-    this.provider = env.BILLING_PROVIDER === 'stripe' ? new StripeBillingProvider(env) : new DevBillingProvider(env);
+    this.provider =
+      env.BILLING_PROVIDER === 'stripe'
+        ? new StripeBillingProvider(env)
+        : env.BILLING_PROVIDER === 'none'
+          ? new DisabledBillingProvider()
+          : new DevBillingProvider(env);
   }
 
   /** Plan catalog with the *live* limits from the database. */

@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { safeEqual } from '@remindora/auth';
 import type { PlanKey } from '@remindora/types';
+import { Errors } from '../../common/errors';
 import type { ServerEnv } from '../../config';
 
 export type Interval = 'month' | 'year';
@@ -44,6 +45,23 @@ export class DevBillingProvider implements BillingProvider {
 
   async parseWebhook(): Promise<NormalizedEvent> {
     throw new Error('The dev billing provider has no webhooks');
+  }
+}
+
+/** No payment provider configured: everything stays on the Free plan. */
+export class DisabledBillingProvider implements BillingProvider {
+  readonly name = 'none';
+
+  async createCheckout(): Promise<{ url: string }> {
+    throw Errors.notConfigured('Payments');
+  }
+
+  async createPortal(): Promise<{ url: string }> {
+    throw Errors.notConfigured('Payments');
+  }
+
+  async parseWebhook(): Promise<NormalizedEvent> {
+    throw Errors.notConfigured('Payments');
   }
 }
 

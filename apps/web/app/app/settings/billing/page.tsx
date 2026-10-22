@@ -125,8 +125,8 @@ function Inner() {
                 {FEATURE_ROWS.filter(([k]) => p.features[k]).map(([k, label]) => <li key={k} className="flex items-center gap-2"><Check size={14} className="text-success" /> {label}</li>)}
               </ul>
               {p.plan !== 'FREE' && !current && (
-                <Button className="mt-5" variant={p.plan === 'PREMIUM' ? 'amber' : 'secondary'} onClick={() => checkout(p.plan as 'PREMIUM')}>
-                  <Sparkles size={15} /> Upgrade to {p.plan.charAt(0) + p.plan.slice(1).toLowerCase()}
+                <Button className="mt-5" variant={p.plan === 'PREMIUM' ? 'amber' : 'secondary'} disabled={catalog.provider === 'none'} onClick={() => checkout(p.plan as 'PREMIUM')}>
+                  <Sparkles size={15} /> {catalog.provider === 'none' ? 'Coming soon' : `Upgrade to ${p.plan.charAt(0) + p.plan.slice(1).toLowerCase()}`}
                 </Button>
               )}
               {p.plan === 'FREE' && ent.plan !== 'FREE' && catalog.provider === 'dev' && (
@@ -136,6 +136,7 @@ function Inner() {
           );
         })}
       </div>
+      {catalog.provider === 'none' && <p className="mt-3 text-xs text-ink-faint">Paid plans aren’t available yet. Everything on the Free plan works fully.</p>}
       {catalog.provider === 'dev' && <p className="mt-3 text-xs text-amber">Development billing provider: upgrades activate instantly without payment.</p>}
     </>
   );
