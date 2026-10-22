@@ -117,8 +117,9 @@ export class WorkspacesService {
     if (role === 'ADMIN' && grant.role !== 'OWNER') throw Errors.forbidden('Only owners can invite admins');
 
     const ent = await this.entitlements.forWorkspaceOwner(id);
+    // "Members" are collaborators: everyone except the owner, plus pending invites.
     const [members, pending] = await Promise.all([
-      this.prisma.membership.count({ where: { workspaceId: id } }),
+      this.prisma.membership.count({ where: { workspaceId: id, role: { not: 'OWNER' } } }),
       this.prisma.invite.count({ where: { workspaceId: id, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } } }),
     ]);
     await this.entitlements.assertLimit(ent, 'members.max', members + pending);

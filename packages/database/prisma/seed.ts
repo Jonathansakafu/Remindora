@@ -442,7 +442,7 @@ async function main() {
     data: [
       { userId: avery.id, kind: 'MENTION', priority: 'MEDIUM', title: 'Priya mentioned you', body: 'Finalize pricing page copy — “can you check the annual discount wording?”', taskId: launchTasks[0]!.id, dedupeKey: `seed:${randomBytes(6).toString('hex')}`, createdAt: at(-1, '15:12') },
       { userId: avery.id, kind: 'ASSIGNMENT', priority: 'HIGH', title: 'You were assigned a task', body: 'Security review: QR device linking', taskId: launchTasks[5]!.id, dedupeKey: `seed:${randomBytes(6).toString('hex')}`, createdAt: at(-2, '09:00'), readAt: at(-2, '09:30') },
-      { userId: avery.id, kind: 'DIGEST', priority: 'NONE', title: 'Good morning — 4 priorities today', body: 'Fix production alert, Reply to Maya, Submit quarterly report, Call mom', dedupeKey: `seed:${randomBytes(6).toString('hex')}`, silent: true, createdAt: at(0, '08:00') },
+      { userId: avery.id, kind: 'DIGEST', priority: 'NONE', title: 'Good morning — 4 priorities today', body: 'Fix production alert, Reply to Maya, Submit quarterly report, Call mom', dedupeKey: `seed:${randomBytes(6).toString('hex')}`, silent: true, createdAt: new Date(Math.min(at(0, '08:00').getTime(), Date.now() - 3_600_000)) },
     ],
   });
 

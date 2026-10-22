@@ -6,7 +6,8 @@ export interface ServerToClientEvents {
   'task.deleted': (payload: { taskId: string; projectId: string; hard: boolean; originSessionId?: string }) => void;
   'project.upserted': (payload: { project: ProjectDTO; originSessionId?: string }) => void;
   'project.deleted': (payload: { projectId: string; originSessionId?: string }) => void;
-  'notification.created': (payload: { notification: NotificationDTO }) => void;
+  /** `alert` tells desktop/web clients whether to raise a native OS notification (channel enabled, not silent). */
+  'notification.created': (payload: { notification: NotificationDTO; alert?: { desktop: boolean; webPush: boolean; sound: boolean } }) => void;
   /** Fired the instant any device acknowledges/snoozes/completes — other devices must dismiss. */
   'notification.resolved': (payload: { notificationId: string; reminderId: string | null; resolution: string }) => void;
   'pairing.claimed': (payload: { pairingId: string; deviceName: string; platform: string; verificationCode: string }) => void;

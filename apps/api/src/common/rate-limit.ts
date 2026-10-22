@@ -1,5 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ENV, type ServerEnv } from '../config';
 import { Errors } from './errors';
 import { RedisService } from './redis.service';
 import { clientIp, type AuthedRequest } from './request';
@@ -19,9 +20,13 @@ export const RateLimit = (...rules: RateLimitRule[]) => SetMetadata(RATE_LIMIT, 
 /** Fixed-window counters in Redis, shared across API instances. */
 @Injectable()
 export class RateLimiter {
-  constructor(private readonly redis: RedisService) {}
+  constructor(
+    private readonly redis: RedisService,
+    @Inject(ENV) private readonly env: ServerEnv,
+  ) {}
 
-  async hit(key: string, limit: number, windowSeconds: number): Promise<void> {
+  async hit(key: string, baseLimit: number, windowSeconds: number): Promise<void> {
+    const limit = baseLimit * this.env.RATE_LIMIT_MULTIPLIER;
     const bucket = `rl:${key}:${Math.floor(Date.now() / 1000 / windowSeconds)}`;
     const [[, count]] = (await this.redis.client.multi().incr(bucket).expire(bucket, windowSeconds + 1).exec()) as [[null, number]];
     if (count > limit) {

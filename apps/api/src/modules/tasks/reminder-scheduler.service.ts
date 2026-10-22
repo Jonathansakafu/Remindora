@@ -46,7 +46,10 @@ export class ReminderScheduler {
         where: { id: r.id },
         data: { state: 'ACTIVE', nextFireAt: future, occurrenceAt: future, attempt: 0, lockedUntil: null },
       });
-      if (future) toQueue.push({ id: r.id, at: future });
+      if (future) {
+        toQueue.push({ id: r.id, at: future });
+        await db.notificationEvent.create({ data: { userId: r.userId, reminderId: r.id, type: 'SCHEDULED', metadata: { at: future.toISOString(), attempt: 0 } } });
+      }
     }
 
     // Queue after the transaction has written nextFireAt; the worker re-validates against the DB anyway.

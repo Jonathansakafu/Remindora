@@ -125,6 +125,8 @@ export class PairingService {
     const check = verifyClaimSecret(rec as PairingRecord, claimSecret);
     if (check === 'invalid') throw Errors.notFound('Pairing');
     if (check === 'expired') throw Errors.gone('This pairing expired', 'pairing_expired');
+    if (rec.status === 'CONSUMED') throw Errors.gone('This pairing was already used', 'pairing_used');
+    if (rec.status === 'REJECTED' || rec.status === 'EXPIRED') throw Errors.gone('This pairing was cancelled', 'pairing_cancelled');
     if (rec.status !== 'APPROVED') throw Errors.conflict('Waiting for approval on your other device', { status: rec.status }, 'pairing_not_approved');
     const won = await this.store().transition(rec.id, 'APPROVED', { status: 'CONSUMED' });
     if (!won) throw Errors.gone('This pairing was already used', 'pairing_used');

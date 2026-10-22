@@ -79,6 +79,8 @@ export const serverEnvSchema = z.object({
   AI_MODEL: z.string().default('claude-opus-5-5'),
 
   SENTRY_DSN: z.string().optional(),
+  /** Scales every rate limit (tests raise it). Must stay 1 in production. */
+  RATE_LIMIT_MULTIPLIER: z.coerce.number().min(1).default(1),
   /** Exposes /billing/dev/activate and console email codes. Never enable in production. */
   DEV_TOOLS: bool,
 });
@@ -99,6 +101,7 @@ export function loadServerEnv(source: NodeJS.ProcessEnv = process.env): ServerEn
     if (env.DEV_TOOLS) throw new Error('DEV_TOOLS must not be enabled in production');
     if (!env.COOKIE_SECURE) throw new Error('COOKIE_SECURE must be true in production');
     if (env.BILLING_PROVIDER === 'dev') throw new Error('BILLING_PROVIDER=dev is not allowed in production');
+    if (env.RATE_LIMIT_MULTIPLIER !== 1) throw new Error('RATE_LIMIT_MULTIPLIER must be 1 in production');
   }
   if (source === process.env) cached = env;
   return env;

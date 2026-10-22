@@ -1,0 +1,36 @@
+{
+  "name": "@remindora/workers",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "concurrently -k -n tsc,workers \"tsc -p tsconfig.build.json -w --preserveWatchOutput\" \"node --env-file-if-exists=../../.env --watch-path=dist --enable-source-maps dist/main.js\"",
+    "start": "node --enable-source-maps dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.6",
+    "@types/node": "^22.20.5",
+    "@types/web-push": "^3.6.4",
+    "concurrently": "^9.2.1",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@remindora/auth": "0.1.0",
+    "@remindora/config": "0.1.0",
+    "@remindora/core": "0.1.0",
+    "@remindora/database": "0.1.0",
+    "@remindora/entitlements": "0.1.0",
+    "@remindora/notifications": "0.1.0",
+    "@remindora/types": "0.1.0",
+    "@sentry/node": "^10.20.0",
+    "@socket.io/redis-emitter": "^5.1.0",
+    "bullmq": "^5.61.0",
+    "ioredis": "^5.8.0",
+    "luxon": "^3.7.2",
+    "pino": "^9.13.0",
+    "web-push": "^3.6.7"
+  }
+}
