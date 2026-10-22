@@ -8,11 +8,11 @@
     "generate": "prisma generate",
     "build": "prisma generate && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "migrate:deploy": "prisma migrate deploy",
-    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "node --env-file-if-exists=../../.env ../../node_modules/prisma/build/index.js migrate deploy",
+    "migrate:dev": "node --env-file-if-exists=../../.env ../../node_modules/prisma/build/index.js migrate dev",
     "migrate:diff": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
-    "seed": "tsx prisma/seed.ts",
-    "studio": "prisma studio"
+    "seed": "node --env-file-if-exists=../../.env --import tsx prisma/seed.ts",
+    "studio": "node --env-file-if-exists=../../.env ../../node_modules/prisma/build/index.js studio"
   },
   "prisma": {
     "schema": "prisma/schema.prisma",

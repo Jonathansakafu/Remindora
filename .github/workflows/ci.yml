@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 24
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  test:
+    name: Unit + API e2e + typecheck
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: remindora, POSTGRES_PASSWORD: remindora, POSTGRES_DB: remindora_e2e }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U remindora" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - name: Build shared packages
+        run: npx turbo run build --filter='./packages/*'
+      - name: Unit tests (recurrence, NLP, notification rules, entitlements, QR tokens, sessions, RBAC)
+        run: npx turbo run test --filter='./packages/*'
+      - name: Typecheck
+        run: |
+          npx tsc -p apps/api/tsconfig.build.json --noEmit
+          npx tsc -p apps/workers/tsconfig.build.json --noEmit
+          (cd apps/web && npx tsc --noEmit)
+          (cd apps/mobile && npx tsc --noEmit)
+      - name: API e2e (device linking, tasks, RBAC, calendar, notifications, sync)
+        env:
+          TEST_DATABASE_URL: postgresql://remindora:remindora@localhost:5432/remindora_e2e
+          TEST_REDIS_URL: redis://localhost:6379
+        run: npm run test:e2e -w @remindora/api
+
+  browser:
+    name: Browser e2e + accessibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: remindora, POSTGRES_PASSWORD: remindora, POSTGRES_DB: remindora_e2e }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U remindora" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - name: Generate a throwaway .env
+        run: |
+          cp .env.example .env
+          for k in JWT_SECRET ENCRYPTION_KEY PAIRING_KEY OTP_PEPPER; do sed -i "s|^$k=$|$k=$(openssl rand -base64 32)|" .env; done
+      - run: npx turbo run build --filter=@remindora/api --filter=@remindora/workers
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Playwright
+        working-directory: apps/web
+        env:
+          E2E_DATABASE_URL: postgresql://remindora:remindora@localhost:5432/remindora_e2e
+          E2E_REDIS_URL: redis://localhost:6379/1
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-traces, path: apps/web/test-results, retention-days: 7 }
+
+  mobile:
+    name: Android JS bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx turbo run build --filter='./packages/*'
+      - name: Metro bundle (Hermes)
+        working-directory: apps/mobile
+        env: { CI: 1, EXPO_PUBLIC_API_URL: https://api.remindora.app }
+        run: npx expo export --platform android --output-dir /tmp/mobile-export
+
+  desktop:
+    name: Desktop (Tauri) check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: apps/desktop/src-tauri }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx turbo run build --filter='./packages/*'
+      - name: Static export for the desktop shell
+        run: npm run build:desktop -w @remindora/web
+      - name: cargo check
+        working-directory: apps/desktop/src-tauri
+        run: cargo check --locked || cargo check

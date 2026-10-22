@@ -154,6 +154,7 @@ async function tasks(
         sortOrder: order++,
         recurrenceId: recurrence?.id,
         deletedAt: t.deleted ? at(-1) : null,
+        createdAt: at(-(8 + Math.floor(rand() * 20)), '09:00'),
         archived: t.archived ?? false,
         tags: { create: tagIds.map((id) => ({ tagId: id })) },
         subtasks: { create: (t.checklist ?? []).map(([title, d], i) => ({ title, done: d, sortOrder: i, completedAt: d ? at(-1) : null })) },
@@ -223,6 +224,7 @@ async function main() {
   await fakeSession(avery.id, mac.id, 0);
   await fakeSession(avery.id, pixel.id, 1);
 
+  // (history is added after projects exist)
   // ── Personal workspaces ──
   const personal = await workspace(avery.id, 'Avery’s Space', 'avery', true);
   for (const u of [priya, jordan, sam]) {
@@ -287,6 +289,29 @@ async function main() {
     { title: '“The Creative Act”', done: true, completedAt: at(-6) },
     { title: '“Four Thousand Weeks”' },
   ]);
+
+  // A month of completed work so analytics trends look like real use.
+  const history = ['Inbox zero', 'Weekly review', 'Reply to investor update', 'Fix flaky test', 'Plan sprint', 'Code review: sync service', 'Gym session', 'Pay credit card', 'Draft blog post', 'Prepare demo', 'Update roadmap', 'Customer call notes', 'Refactor reminders worker', 'Order groceries', 'Book flights', 'Call the bank'];
+  for (let d = 30; d >= 1; d--) {
+    const n = Math.floor(rand() * 4);
+    for (let k = 0; k < n; k++) {
+      const done = at(-d, `${9 + Math.floor(rand() * 9)}:${rand() > 0.5 ? '15' : '45'}`);
+      await prisma.task.create({
+        data: {
+          workspaceId: personal.id,
+          projectId: rand() > 0.4 ? work.id : home.id,
+          title: history[Math.floor(rand() * history.length)]!,
+          priority: (['NONE', 'LOW', 'MEDIUM', 'HIGH'] as const)[Math.floor(rand() * 4)]!,
+          status: 'DONE',
+          creatorId: avery.id,
+          completedById: avery.id,
+          completedAt: done,
+          dueAt: done,
+          createdAt: new Date(done.getTime() - (1 + Math.floor(rand() * 4)) * 86_400_000),
+        },
+      });
+    }
+  }
 
   // ── Team workspace ──
   const team = await workspace(avery.id, 'Northwind Studio', 'northwind', false, [

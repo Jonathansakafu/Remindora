@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { join } from 'node:path';
 
 /**
  * BUILD_TARGET=desktop produces a static export that the Tauri shell bundles
@@ -25,7 +26,9 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@remindora/ui'],
-  output: isDesktop ? 'export' : undefined,
+  // Static export for the desktop shell; standalone server bundle for Docker/Render.
+  output: isDesktop ? 'export' : process.env.BUILD_STANDALONE === '1' ? 'standalone' : undefined,
+  outputFileTracingRoot: join(__dirname, '../..'),
   trailingSlash: isDesktop,
   images: { unoptimized: true },
   distDir: process.env.NEXT_DIST_DIR ?? '.next',

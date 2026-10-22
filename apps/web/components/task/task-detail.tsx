@@ -213,7 +213,7 @@ function TaskDetailBody({ task, onClose }: { task: TaskDTO; onClose: () => void 
                   const v = fromLocalInput(e.target.value, tz);
                   patch({ dueAt: v.iso, allDay: task.allDay });
                 }}
-                className="h-8 min-w-0 flex-1 basis-40 text-sm"
+                className="h-8 min-w-[196px] flex-1 text-sm"
               />
               <label className="flex shrink-0 items-center gap-1.5 text-xs text-ink-muted">
                 <Switch
