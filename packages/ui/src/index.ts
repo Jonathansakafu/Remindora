@@ -5,3 +5,4 @@ export * from './components/fields';
 export * from './components/primitives';
 export * from './components/display';
 export * from './components/logo';
+export * from './about';

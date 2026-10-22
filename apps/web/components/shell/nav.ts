@@ -1,4 +1,4 @@
-import { Archive, BarChart3, Bell, CalendarDays, CalendarRange, CheckCheck, Clock, Flame, Grid2x2, Hourglass, Inbox, Orbit, Search, Star, Sun, Target, Trash2, UserCheck, AlertTriangle } from 'lucide-react';
+import { Info, Archive, BarChart3, Bell, CalendarDays, CalendarRange, CheckCheck, Clock, Flame, Grid2x2, Hourglass, Inbox, Orbit, Search, Star, Sun, Target, Trash2, UserCheck, AlertTriangle } from 'lucide-react';
 
 export const primaryNav = [
   { href: '/app/inbox', label: 'Inbox', icon: Inbox, slug: 'inbox' },
@@ -20,6 +20,7 @@ export const secondaryNav = [
   { href: '/app/completed', label: 'Completed', icon: CheckCheck, slug: 'completed' },
   { href: '/app/archive', label: 'Archive', icon: Archive, slug: 'archive' },
   { href: '/app/trash', label: 'Trash', icon: Trash2, slug: 'trash' },
+  { href: '/about', label: 'About', icon: Info, slug: 'about' },
 ] as const;
 
 export const mobileTabs = [

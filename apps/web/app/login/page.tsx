@@ -174,6 +174,7 @@ function LoginInner() {
           })}
         </div>
       )}
+      <p className="mt-4 text-center text-xs"><a href="/about" className="text-ink-muted underline-offset-4 hover:text-ink hover:underline">About Remindora</a></p>
       <p className="mt-6 text-center text-xs text-ink-faint">Already signed in on your phone? You can also link this device from <em>Settings → Linked devices</em> there.</p>
     </AuthFrame>
   );

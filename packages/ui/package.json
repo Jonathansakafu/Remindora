@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./tokens": "./src/tokens.ts",
     "./styles.css": "./src/styles.css",
-    "./assets/*": "./assets/*"
+    "./assets/*": "./assets/*",
+    "./about": "./src/about.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

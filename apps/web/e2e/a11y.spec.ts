@@ -18,6 +18,12 @@ test('login page has no serious accessibility violations', async ({ page }) => {
   expect(await audit(page, '/login')).toEqual([]);
 });
 
+test('about page has no serious accessibility violations', async ({ page }) => {
+  await page.goto('/about');
+  await page.getByRole('heading', { name: 'Jonathan Sakafu' }).waitFor();
+  expect(await audit(page, '/about')).toEqual([]);
+});
+
 test('main screens have no serious accessibility violations', async ({ page }) => {
   test.setTimeout(180_000);
   await signIn(page, uniqueEmail('a11y'));

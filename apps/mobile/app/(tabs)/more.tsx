@@ -31,6 +31,7 @@ export default function More() {
           <Row label="Linked devices" href="/devices" />
           <Row label="Scan to link a device" href="/link" />
           <Row label="Settings" href="/settings" />
+          <Row label="About Remindora" href="/about" />
         </Glass>
         <Glass>
           <Row

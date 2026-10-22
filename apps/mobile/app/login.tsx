@@ -2,7 +2,7 @@ import type { AuthTokensDTO } from '@remindora/types';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, Text, TextInput, View } from 'react-native';
 import { Button, Glass, Screen, styles } from '../src/components/ui';
 import { api, ApiError } from '../src/lib/api';
 import { deviceInfo, useSession } from '../src/lib/session';
@@ -106,6 +106,9 @@ export default function Login() {
           )}
           {error ? <Text accessibilityRole="alert" style={{ color: colors.danger, marginTop: 12 }}>{error}</Text> : null}
         </Glass>
+        <Pressable onPress={() => router.push('/about')} accessibilityRole="link" style={{ alignSelf: 'center', marginTop: 16 }}>
+          <Text style={{ color: colors.textMuted }}>About Remindora</Text>
+        </Pressable>
       </KeyboardAvoidingView>
     </Screen>
   );

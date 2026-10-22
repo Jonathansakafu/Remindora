@@ -85,6 +85,10 @@ export default function ProfileSettings() {
         </Section>
       )}
 
+      <Section title="About" description="Remindora is built by Jonathan Sakafu." actions={<a href="/about" className="text-sm text-cyan hover:underline">About Remindora →</a>}>
+        <p className="text-sm text-ink-muted">Version 0.1.0</p>
+      </Section>
+
       <Section title="Keyboard shortcuts">
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
           {[[['N'], 'Quick add'], [['⌘', 'K'], 'Command palette'], [['/'], 'Search'], [['G', 'T'], 'Go to Today'], [['G', 'I'], 'Go to Inbox'], [['G', 'C'], 'Go to Calendar'], [['C'], 'Complete focused task'], [['Enter'], 'Open focused task'], [['X'], 'Select for bulk actions'], [['Esc'], 'Close panel / clear selection']].map(([k, label]) => (

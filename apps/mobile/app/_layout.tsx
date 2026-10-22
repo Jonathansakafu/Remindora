@@ -67,7 +67,7 @@ export default function RootLayout() {
   // Auth gate: public screens are login, link (QR) and the OAuth callback.
   useEffect(() => {
     if (!ready) return;
-    const publicRoute = segments[0] === 'login' || segments[0] === 'link' || segments[0] === 'auth';
+    const publicRoute = segments[0] === 'login' || segments[0] === 'link' || segments[0] === 'auth' || segments[0] === 'about';
     if (status === 'signed_out' && !publicRoute) router.replace('/login');
     if (status === 'signed_in' && segments[0] === 'login') router.replace('/today');
   }, [status, segments, ready]);
