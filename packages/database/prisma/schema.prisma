@@ -1,0 +1,926 @@
+// Remindora data model.
+// All timestamps are stored as UTC (timestamptz). Wall-clock rendering uses the
+// user's IANA timezone. Most user content is soft-deleted (deletedAt) and every
+// syncable row carries a monotonically increasing `syncSeq` maintained by a
+// Postgres trigger (see migrations/0002_sync_seq).
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Identity ─────────────────────────────
+
+model User {
+  id                    String    @id @default(uuid()) @db.Uuid
+  email                 String    @unique
+  emailVerifiedAt       DateTime? @db.Timestamptz(3)
+  name                  String?
+  avatarUrl             String?
+  timezone              String    @default("UTC")
+  locale                String    @default("en-US")
+  weekStartsOn          Int       @default(1)
+  theme                 String    @default("observatory")
+  /// New email sign-ins need approval from a signed-in device (when one was active recently).
+  requireDeviceApproval Boolean   @default(true)
+  isAdmin               Boolean   @default(false)
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt             DateTime? @db.Timestamptz(3)
+
+  accounts             Account[]
+  sessions             Session[]
+  devices              Device[]
+  pairingTokens        DevicePairingToken[]
+  memberships          Membership[]
+  ownedWorkspaces      Workspace[]                   @relation("WorkspaceOwner")
+  createdTasks         Task[]                        @relation("TaskCreator")
+  assignedTasks        Task[]                        @relation("TaskAssignee")
+  comments             Comment[]
+  habits               Habit[]
+  focusSessions        FocusSession[]
+  countdowns           Countdown[]
+  savedFilters         SavedFilter[]
+  templates            Template[]
+  notifications        Notification[]
+  notificationPref     NotificationPreference?
+  projectOverrides     ProjectNotificationOverride[]
+  subscriptions        Subscription[]
+  entitlements         Entitlement[]
+  favorites            Favorite[]
+  reminders            Reminder[]
+  integrations         Integration[]
+  calendarSubscriptions CalendarSubscription[]
+  attachments          Attachment[]
+}
+
+model Account {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  provider          String
+  providerAccountId String
+  /// AES-256-GCM envelope (packages/auth encryptSecret), bound to this row id.
+  accessTokenEnc    String?
+  refreshTokenEnc   String?
+  expiresAt         DateTime? @db.Timestamptz(3)
+  scope             String?
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+enum DevicePlatform {
+  WEB
+  DESKTOP_MACOS
+  DESKTOP_WINDOWS
+  DESKTOP_LINUX
+  ANDROID
+  IOS
+  UNKNOWN
+}
+
+enum LinkMethod {
+  EMAIL_CODE
+  MAGIC_LINK
+  OAUTH
+  QR
+  SEED
+}
+
+model Device {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @db.Uuid
+  name            String
+  platform        DevicePlatform
+  osVersion       String?
+  appVersion      String?
+  linkedVia       LinkMethod
+  /// FCM registration token / Web Push subscription JSON, encrypted at rest.
+  pushTokenEnc    String?
+  pushProvider    String?
+  pushEnabled     Boolean        @default(false)
+  /// Biometric re-auth: secret held in the device's biometric-gated secure storage (encrypted here).
+  reauthSecretEnc String?
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  lastActiveAt    DateTime       @default(now()) @db.Timestamptz(3)
+  revokedAt       DateTime?      @db.Timestamptz(3)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions        Session[]
+  deliveries      NotificationDelivery[]
+
+  @@index([userId, revokedAt])
+}
+
+model Session {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @db.Uuid
+  deviceId              String    @db.Uuid
+  /// sha256 of the current opaque refresh token. Raw tokens are never stored.
+  refreshTokenHash      String    @unique
+  /// Previous hash, kept to detect refresh-token reuse (theft) and revoke the session.
+  prevRefreshTokenHash  String?   @unique
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt             DateTime  @db.Timestamptz(3)
+  lastActiveAt          DateTime  @default(now()) @db.Timestamptz(3)
+  reauthAt              DateTime? @db.Timestamptz(3)
+  revokedAt             DateTime? @db.Timestamptz(3)
+  revokedReason         String?
+  ip                    String?
+  userAgent             String?
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device                Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([deviceId])
+}
+
+enum ChallengePurpose {
+  SIGN_IN
+  REAUTH
+}
+
+enum ChallengeStatus {
+  PENDING
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  CONSUMED
+  EXPIRED
+}
+
+/// Email magic-link / six-digit-code challenge. Single-use, 10-minute TTL, attempt-limited.
+model EmailChallenge {
+  id               String           @id @default(uuid()) @db.Uuid
+  email            String
+  userId           String?          @db.Uuid
+  purpose          ChallengePurpose
+  status           ChallengeStatus  @default(PENDING)
+  codeHash         String
+  tokenHash        String           @unique
+  /// The requesting device polls approval status with this secret (hash stored).
+  pollSecretHash   String
+  attempts         Int              @default(0)
+  approvalRequired Boolean          @default(false)
+  deviceInfo       Json
+  sessionId        String?          @db.Uuid
+  redirectTo       String?
+  ip               String?
+  expiresAt        DateTime         @db.Timestamptz(3)
+  verifiedAt       DateTime?        @db.Timestamptz(3)
+  decidedAt        DateTime?        @db.Timestamptz(3)
+  decidedBySession String?          @db.Uuid
+  createdAt        DateTime         @default(now()) @db.Timestamptz(3)
+
+  @@index([email, createdAt])
+}
+
+enum PairingStatus {
+  PENDING
+  CLAIMED
+  APPROVED
+  CONSUMED
+  REJECTED
+  EXPIRED
+}
+
+/// QR pairing record. The QR token itself is never stored — only sha256 of its secret.
+model DevicePairingToken {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @db.Uuid
+  initiatorSessionId String        @db.Uuid
+  secretHash         String
+  status             PairingStatus @default(PENDING)
+  expiresAt          DateTime      @db.Timestamptz(3)
+  claimSecretHash    String?
+  claimExpiresAt     DateTime?     @db.Timestamptz(3)
+  verificationCode   String?
+  claimantDevice     Json?
+  claimantIp         String?
+  approvedAt         DateTime?     @db.Timestamptz(3)
+  consumedAt         DateTime?     @db.Timestamptz(3)
+  createdDeviceId    String?       @db.Uuid
+  createdAt          DateTime      @default(now()) @db.Timestamptz(3)
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ───────────────────────────── Workspaces ─────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Workspace {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  isPersonal  Boolean      @default(false)
+  ownerId     String       @db.Uuid
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?    @db.Timestamptz(3)
+  owner       User         @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  memberships Membership[]
+  invites     Invite[]
+  folders     Folder[]
+  projects    Project[]
+  tasks       Task[]
+  tags        Tag[]
+  activity    ActivityEvent[]
+  auditLogs   AuditLog[]
+  subscriptions Subscription[]
+}
+
+model Membership {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  userId      String    @db.Uuid
+  role        Role
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model Invite {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  email       String
+  role        Role
+  tokenHash   String    @unique
+  invitedById String    @db.Uuid
+  expiresAt   DateTime  @db.Timestamptz(3)
+  acceptedAt  DateTime? @db.Timestamptz(3)
+  revokedAt   DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email])
+}
+
+model Folder {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  name        String
+  sortOrder   Float     @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects    Project[]
+
+  @@index([workspaceId])
+}
+
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  folderId    String?   @db.Uuid
+  name        String
+  color       String    @default("#60E9FF")
+  icon        String?
+  isInbox     Boolean   @default(false)
+  defaultView String    @default("LIST")
+  archived    Boolean   @default(false)
+  sortOrder   Float     @default(0)
+  createdById String    @db.Uuid
+  syncSeq     BigInt    @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  folder      Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  sections    Section[]
+  tasks       Task[]
+  overrides   ProjectNotificationOverride[]
+
+  @@index([workspaceId, deletedAt])
+  @@index([syncSeq])
+}
+
+model Section {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @db.Uuid
+  name      String
+  sortOrder Float     @default(0)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@index([projectId])
+}
+
+// ───────────────────────────── Tasks ─────────────────────────────
+
+enum Priority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+model Task {
+  id                String          @id @default(uuid()) @db.Uuid
+  workspaceId       String          @db.Uuid
+  projectId         String          @db.Uuid
+  sectionId         String?         @db.Uuid
+  parentId          String?         @db.Uuid
+  title             String
+  /// Sanitized HTML from the rich-text editor.
+  description       String?
+  priority          Priority        @default(NONE)
+  status            TaskStatus      @default(TODO)
+  assigneeId        String?         @db.Uuid
+  creatorId         String          @db.Uuid
+  startAt           DateTime?       @db.Timestamptz(3)
+  dueAt             DateTime?       @db.Timestamptz(3)
+  allDay            Boolean         @default(false)
+  durationMinutes   Int?
+  completedAt       DateTime?       @db.Timestamptz(3)
+  completedById     String?         @db.Uuid
+  archived          Boolean         @default(false)
+  sortOrder         Float           @default(0)
+  /// Optimistic concurrency: bumped on every write.
+  version           Int             @default(1)
+  /// { field: version-at-which-it-last-changed } for field-level merges.
+  fieldVersions     Json            @default("{}")
+  syncSeq           BigInt          @default(0)
+  recurrenceId      String?         @db.Uuid
+  /// First task of a recurring series; occurrences point back to it.
+  seriesId          String?         @db.Uuid
+  clientId          String?         @unique @db.Uuid
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+  deletedAt         DateTime?       @db.Timestamptz(3)
+
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section      Section?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  parent       Task?           @relation("TaskChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Task[]          @relation("TaskChildren")
+  assignee     User?           @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator      User            @relation("TaskCreator", fields: [creatorId], references: [id])
+  recurrence   RecurrenceRule? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+  subtasks     Subtask[]
+  tags         TaskTag[]
+  reminders    Reminder[]
+  attachments  Attachment[]
+  comments     Comment[]
+  dependencies TaskDependency[] @relation("DependentTask")
+  dependents   TaskDependency[] @relation("PrerequisiteTask")
+  favorites    Favorite[]
+  focusSessions FocusSession[]
+
+  @@index([projectId, deletedAt, completedAt])
+  @@index([workspaceId, dueAt])
+  @@index([assigneeId, completedAt])
+  @@index([syncSeq])
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "task_title_trgm", type: Gin)
+  @@index([description(ops: raw("gin_trgm_ops"))], map: "task_description_trgm", type: Gin)
+}
+
+/// Checklist item.
+model Subtask {
+  id          String    @id @default(uuid()) @db.Uuid
+  taskId      String    @db.Uuid
+  title       String
+  done        Boolean   @default(false)
+  sortOrder   Float     @default(0)
+  remindAt    DateTime? @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reminders   Reminder[]
+
+  @@index([taskId])
+}
+
+model Tag {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  name        String
+  color       String    @default("#A58CFF")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       TaskTag[]
+
+  @@unique([workspaceId, name])
+}
+
+model TaskTag {
+  taskId String @db.Uuid
+  tagId  String @db.Uuid
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([tagId])
+}
+
+model TaskDependency {
+  taskId      String @db.Uuid
+  dependsOnId String @db.Uuid
+  task        Task   @relation("DependentTask", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn   Task   @relation("PrerequisiteTask", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnId])
+}
+
+model Favorite {
+  userId    String   @db.Uuid
+  taskId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([userId, taskId])
+}
+
+enum RecurrenceMode {
+  FROM_DUE
+  FROM_COMPLETION
+}
+
+model RecurrenceRule {
+  id        String         @id @default(uuid()) @db.Uuid
+  rrule     String
+  mode      RecurrenceMode @default(FROM_DUE)
+  dtstart   DateTime       @db.Timestamptz(3)
+  until     DateTime?      @db.Timestamptz(3)
+  timezone  String
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  tasks     Task[]
+}
+
+enum ReminderState {
+  ACTIVE
+  SNOOZED
+  ACKNOWLEDGED
+  STOPPED
+  DONE
+}
+
+model Reminder {
+  id            String        @id @default(uuid()) @db.Uuid
+  taskId        String        @db.Uuid
+  subtaskId     String?       @db.Uuid
+  /// Recipient. Usually the assignee, else the creator.
+  userId        String        @db.Uuid
+  offsetMinutes Int?
+  at            DateTime?     @db.Timestamptz(3)
+  constant      Boolean       @default(false)
+  state         ReminderState @default(ACTIVE)
+  /// Source of truth for scheduling. Workers sweep `nextFireAt <= now`.
+  nextFireAt    DateTime?     @db.Timestamptz(3)
+  /// Fire time of the current occurrence (delivery idempotency key component).
+  occurrenceAt  DateTime?     @db.Timestamptz(3)
+  attempt       Int           @default(0)
+  lastFiredAt   DateTime?     @db.Timestamptz(3)
+  lockedUntil   DateTime?     @db.Timestamptz(3)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+  task          Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  subtask       Subtask?      @relation(fields: [subtaskId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([state, nextFireAt])
+  @@index([taskId])
+}
+
+enum AttachmentStatus {
+  PENDING
+  READY
+}
+
+model Attachment {
+  id          String           @id @default(uuid()) @db.Uuid
+  taskId      String           @db.Uuid
+  uploaderId  String           @db.Uuid
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  storageKey  String           @unique
+  status      AttachmentStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  deletedAt   DateTime?        @db.Timestamptz(3)
+  task        Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader    User             @relation(fields: [uploaderId], references: [id])
+
+  @@index([taskId])
+  @@index([uploaderId, createdAt])
+}
+
+model Comment {
+  id        String    @id @default(uuid()) @db.Uuid
+  taskId    String    @db.Uuid
+  authorId  String    @db.Uuid
+  body      String
+  mentions  String[]  @db.Uuid
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  editedAt  DateTime? @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+
+  @@index([taskId, createdAt])
+}
+
+/// User-visible task/list history.
+model ActivityEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  actorId     String?   @db.Uuid
+  verb        String
+  entityType  String
+  entityId    String    @db.Uuid
+  projectId   String?   @db.Uuid
+  data        Json      @default("{}")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+/// Security audit trail: every authorized workspace mutation and every auth/device event.
+model AuditLog {
+  id          String     @id @default(uuid()) @db.Uuid
+  workspaceId String?    @db.Uuid
+  actorId     String?    @db.Uuid
+  sessionId   String?    @db.Uuid
+  action      String
+  targetType  String?
+  targetId    String?
+  outcome     String     @default("success")
+  ip          String?
+  userAgent   String?
+  metadata    Json       @default("{}")
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+// ───────────────────────────── Focus, habits, countdowns ─────────────────────────────
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+model Habit {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @db.Uuid
+  name            String
+  icon            String?
+  color           String         @default("#FFBC5C")
+  frequency       HabitFrequency @default(DAILY)
+  /// ISO weekdays (1=Mon..7=Sun). Empty = every day.
+  weekdays        Int[]
+  targetPerPeriod Int            @default(1)
+  reminderTime    String?
+  lastRemindedOn  String?
+  archived        Boolean        @default(false)
+  sortOrder       Float          @default(0)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  deletedAt       DateTime?      @db.Timestamptz(3)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns        HabitCheckIn[]
+
+  @@index([userId])
+}
+
+model HabitCheckIn {
+  id        String   @id @default(uuid()) @db.Uuid
+  habitId   String   @db.Uuid
+  /// Local calendar date in the user's timezone, YYYY-MM-DD.
+  date      String
+  count     Int      @default(1)
+  note      String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+}
+
+enum FocusKind {
+  FOCUS
+  SHORT_BREAK
+  LONG_BREAK
+}
+
+model FocusSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  taskId         String?   @db.Uuid
+  kind           FocusKind @default(FOCUS)
+  startedAt      DateTime  @db.Timestamptz(3)
+  endedAt        DateTime? @db.Timestamptz(3)
+  plannedMinutes Int
+  actualSeconds  Int       @default(0)
+  completed      Boolean   @default(false)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task           Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startedAt])
+}
+
+model Countdown {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  title     String
+  targetAt  DateTime  @db.Timestamptz(3)
+  color     String    @default("#A58CFF")
+  icon      String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SavedFilter {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  name        String
+  query       Json
+  advanced    Boolean  @default(false)
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum TemplateKind {
+  TASK
+  PROJECT
+}
+
+model Template {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @db.Uuid
+  kind        TemplateKind
+  name        String
+  description String?
+  payload     Json
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ───────────────────────────── Notifications ─────────────────────────────
+
+model Notification {
+  id             String     @id @default(uuid()) @db.Uuid
+  userId         String     @db.Uuid
+  taskId         String?    @db.Uuid
+  reminderId     String?    @db.Uuid
+  kind           String
+  priority       Priority   @default(NONE)
+  title          String
+  body           String
+  data           Json       @default("{}")
+  silent         Boolean    @default(false)
+  /// One notification per reminder occurrence+attempt, across all devices.
+  dedupeKey      String     @unique
+  readAt         DateTime?  @db.Timestamptz(3)
+  acknowledgedAt DateTime?  @db.Timestamptz(3)
+  resolution     String?
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries     NotificationDelivery[]
+  events         NotificationEvent[]
+
+  @@index([userId, createdAt])
+  @@index([reminderId])
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  SUPPRESSED
+}
+
+model NotificationDelivery {
+  id                String         @id @default(uuid()) @db.Uuid
+  notificationId    String         @db.Uuid
+  deviceId          String?        @db.Uuid
+  channel           String
+  status            DeliveryStatus @default(PENDING)
+  providerMessageId String?
+  error             String?
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+  notification      Notification   @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  device            Device?        @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@unique([notificationId, channel, deviceId])
+  @@index([status, createdAt])
+}
+
+/// Append-only lifecycle log: scheduled, delivered, opened, snoozed, failed, acknowledged, completed.
+model NotificationEvent {
+  id             String        @id @default(uuid()) @db.Uuid
+  userId         String        @db.Uuid
+  notificationId String?       @db.Uuid
+  reminderId     String?       @db.Uuid
+  deviceId       String?       @db.Uuid
+  type           String
+  channel        String?
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([reminderId])
+}
+
+model NotificationPreference {
+  userId                   String   @id @db.Uuid
+  channels                 Json     @default("{\"push\":true,\"desktop\":true,\"webPush\":true,\"email\":false,\"inApp\":true}")
+  criticalRepeatMinutes    Int      @default(30)
+  highRepeatMinutes        Int      @default(120)
+  mediumFollowUpMinutes    Int?
+  maxRealerts              Int      @default(10)
+  criticalEmail            Boolean  @default(false)
+  quietHoursEnabled        Boolean  @default(false)
+  quietStart               String   @default("22:00")
+  quietEnd                 String   @default("07:00")
+  criticalBypassQuietHours Boolean  @default(false)
+  weekendsEnabled          Boolean  @default(true)
+  lowPriorityMode          String   @default("inbox")
+  morningDigestEnabled     Boolean  @default(true)
+  morningDigestTime        String   @default("08:00")
+  eveningPlanningEnabled   Boolean  @default(false)
+  eveningPlanningTime      String   @default("20:00")
+  lastMorningDigestOn      String?
+  lastEveningDigestOn      String?
+  updatedAt                DateTime @updatedAt @db.Timestamptz(3)
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProjectNotificationOverride {
+  userId                String  @db.Uuid
+  projectId             String  @db.Uuid
+  muted                 Boolean @default(false)
+  channels              Json?
+  criticalRepeatMinutes Int?
+  highRepeatMinutes     Int?
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project               Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+}
+
+// ───────────────────────────── Billing & entitlements ─────────────────────────────
+
+enum PlanKey {
+  FREE
+  PREMIUM
+  TEAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+model Subscription {
+  id                     String             @id @default(uuid()) @db.Uuid
+  userId                 String             @db.Uuid
+  /// Set for Team plans billed to a workspace.
+  workspaceId            String?            @db.Uuid
+  plan                   PlanKey
+  status                 SubscriptionStatus
+  provider               String
+  providerCustomerId     String?
+  providerSubscriptionId String?            @unique
+  currentPeriodEnd       DateTime?          @db.Timestamptz(3)
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @db.Timestamptz(3)
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace              Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+}
+
+/// Live entitlement values. plan+null user = plan default; null plan + user = per-user override.
+model Entitlement {
+  id        String   @id @default(uuid()) @db.Uuid
+  plan      PlanKey?
+  userId    String?  @db.Uuid
+  key       String
+  limit     Int?
+  enabled   Boolean?
+  note      String?
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([userId])
+}
+
+model FeatureFlag {
+  key            String   @id
+  description    String?
+  enabled        Boolean  @default(true)
+  rolloutPercent Int      @default(100)
+  plans          String[]
+  allowUserIds   String[]
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// Idempotency for billing-provider webhooks.
+model BillingEvent {
+  id         String   @id
+  provider   String
+  type       String
+  receivedAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+// ───────────────────────────── Integrations ─────────────────────────────
+
+model Integration {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  provider       String
+  status         String    @default("disconnected")
+  credentialsEnc String?
+  config         Json      @default("{}")
+  lastSyncAt     DateTime? @db.Timestamptz(3)
+  lastError      String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+}
+
+/// Read-only ICS calendar subscription rendered alongside tasks.
+model CalendarSubscription {
+  id            String          @id @default(uuid()) @db.Uuid
+  userId        String          @db.Uuid
+  name          String
+  url           String
+  color         String          @default("#7865FF")
+  lastFetchedAt DateTime?       @db.Timestamptz(3)
+  lastError     String?
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events        ExternalEvent[]
+
+  @@index([userId])
+}
+
+model ExternalEvent {
+  id             String               @id @default(uuid()) @db.Uuid
+  subscriptionId String               @db.Uuid
+  uid            String
+  title          String
+  startAt        DateTime             @db.Timestamptz(3)
+  endAt          DateTime             @db.Timestamptz(3)
+  allDay         Boolean              @default(false)
+  location       String?
+  subscription   CalendarSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, uid, startAt])
+  @@index([subscriptionId, startAt])
+}

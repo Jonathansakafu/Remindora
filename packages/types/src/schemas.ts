@@ -46,7 +46,8 @@ export const createTaskInput = z.object({
   allDay: z.boolean().default(false),
   durationMinutes: z.number().int().min(1).max(60 * 24 * 14).nullish(),
   recurrence: recurrenceInput.nullish(),
-  reminders: z.array(reminderInput).max(10).default([]),
+  /** Omit to get priority-based default reminders; pass [] for none. */
+  reminders: z.array(reminderInput).max(10).optional(),
   checklist: z.array(z.string().trim().min(1).max(500)).max(500).default([]),
   dependsOn: z.array(z.uuid()).max(50).default([]),
   isFavorite: z.boolean().default(false),

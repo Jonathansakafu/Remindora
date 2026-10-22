@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@remindora/types": "0.1.0",
-    "luxon": "^3.7.2"
+    "luxon": "^3.7.2",
+    "nodemailer": "^7.0.6"
   },
   "devDependencies": {
     "@types/luxon": "^3.7.1",
+    "@types/nodemailer": "^7.0.2",
     "vitest": "3.2.4"
   }
 }

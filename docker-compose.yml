@@ -1,0 +1,33 @@
+# Local infrastructure for contributors with Docker. Without Docker use `npm run local:infra`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: remindora
+      POSTGRES_PASSWORD: remindora
+      POSTGRES_DB: remindora
+    ports: ["54329:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remindora"]
+      interval: 5s
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["63799:6379"]
+    volumes: [redisdata:/data]
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: remindora
+      MINIO_ROOT_PASSWORD: remindora-secret
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

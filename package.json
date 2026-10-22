@@ -26,11 +26,20 @@
     "openapi": "npm run openapi -w @remindora/api"
   },
   "devDependencies": {
+    "embedded-postgres": "^17.6.0-beta.15",
+    "prettier": "3.6.2",
+    "redis-memory-server": "^0.17.1",
     "turbo": "2.11.10",
-    "typescript": "5.9.3",
-    "prettier": "3.6.2"
+    "typescript": "5.9.3"
   },
   "allowScripts": {
-    "esbuild@0.28.2": true
+    "esbuild@0.28.2": true,
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "fsevents@2.3.3": true,
+    "@embedded-postgres/darwin-x64@17.6.0-beta.15": true,
+    "redis-memory-server@0.17.1": true,
+    "@swc/core@1.13.5": true
   }
 }
