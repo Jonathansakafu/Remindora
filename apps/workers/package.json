@@ -14,8 +14,8 @@
     "@types/luxon": "^3.7.6",
     "@types/node": "^22.20.5",
     "@types/web-push": "^3.6.4",
-    "concurrently": "^9.2.1",
-    "vitest": "^3.2.4"
+    "concurrently": "^10.0.6",
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "@remindora/auth": "0.1.0",
@@ -25,7 +25,7 @@
     "@remindora/entitlements": "0.1.0",
     "@remindora/notifications": "0.1.0",
     "@remindora/types": "0.1.0",
-    "@sentry/node": "^10.20.0",
+    "@sentry/node": "^11.8.0",
     "@socket.io/redis-emitter": "^5.1.0",
     "bullmq": "^5.61.0",
     "ioredis": "^5.8.0",

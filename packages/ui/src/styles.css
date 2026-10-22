@@ -1,0 +1,131 @@
+/* Remindora design system — import after `@import "tailwindcss";` */
+
+@theme {
+  --color-bg: #070d22;
+  --color-bg-elevated: #0b1330;
+  --color-surface: #111c3e;
+  --color-surface-high: #182b58;
+  --color-line: rgb(168 239 255 / 0.12);
+  --color-line-strong: rgb(168 239 255 / 0.24);
+  --color-ink: #e8f4ff;
+  --color-ink-muted: #a6bad8;
+  --color-ink-faint: #7d92b4;
+  --color-cyan: #60e9ff;
+  --color-violet: #a58cff;
+  --color-amber: #ffbc5c;
+  --color-danger: #ff7a93;
+  --color-success: #7cf3b0;
+  --color-p-critical: #ff7a93;
+  --color-p-high: #ffbc5c;
+  --color-p-medium: #60e9ff;
+  --color-p-low: #a58cff;
+  --color-p-none: #7d92b4;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-glass: 18px;
+  --shadow-glass: 0 1px 0 0 rgb(168 239 255 / 0.06) inset, 0 20px 50px -20px rgb(3 7 25 / 0.8);
+  --shadow-lift: 0 24px 60px -18px rgb(3 7 25 / 0.9), 0 0 0 1px rgb(96 233 255 / 0.35);
+
+  --animate-rise: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 0.2s ease-out both;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* Daybreak: optional light theme (Settings → Appearance). */
+[data-theme='daybreak'] {
+  --color-bg: #eef3fb;
+  --color-bg-elevated: #f7f9fe;
+  --color-surface: #ffffff;
+  --color-surface-high: #e7eefa;
+  --color-line: rgb(17 28 62 / 0.1);
+  --color-line-strong: rgb(17 28 62 / 0.2);
+  --color-ink: #0b1330;
+  --color-ink-muted: #3a4c72;
+  --color-ink-faint: #5a6b8e;
+  --color-cyan: #0b7f99;
+  --color-violet: #5b43d6;
+  --color-amber: #a05e00;
+  --color-danger: #c42a4b;
+  --color-success: #177a4c;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  [data-theme='daybreak'] {
+    color-scheme: light;
+  }
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgb(120 101 255 / 0.12), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgb(81 228 255 / 0.08), transparent 60%),
+      var(--color-bg);
+    font-family: var(--font-sans);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: rgb(96 233 255 / 0.3);
+  }
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility glass-strong {
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid var(--color-line-strong);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility luminous-border {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgb(96 233 255 / 0.55), rgb(165 140 255 / 0.25) 45%, rgb(255 188 92 / 0.35));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+/* Reduced motion: replace movement with simple opacity/scale (handled per component) and kill long animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.12s !important;
+    scroll-behavior: auto !important;
+  }
+}
