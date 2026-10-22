@@ -5,6 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["BUILD_STANDALONE", "BUILD_TARGET", "NEXT_DIST_DIR", "NEXT_PUBLIC_*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"]
     },
     "typecheck": { "dependsOn": ["^build"] },
