@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { keys, useNotifications } from '@/lib/queries';
+import { initDesktop } from '@/lib/desktop';
 import { connectRealtime, disconnectRealtime } from '@/lib/realtime';
 import { useSession } from '@/lib/session';
 import { useUi } from '@/lib/ui-store';
@@ -102,6 +103,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [status, qc]);
 
   useEffect(() => ui.setMobileNav(false), [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let dispose: (() => void) | undefined;
+    void initDesktop((href) => router.push(href)).then((d) => (dispose = d));
+    return () => dispose?.();
+  }, [router]);
 
   if (status !== 'signed_in') {
     return (

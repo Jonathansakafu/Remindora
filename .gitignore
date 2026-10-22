@@ -21,3 +21,5 @@ playwright-report/
 *.tsbuildinfo
 .next-e2e/
 e2e/.workers.pid
+.next-*/
+apps/web/out/

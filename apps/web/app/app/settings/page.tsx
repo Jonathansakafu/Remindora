@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Section, SettingRow } from '@/components/settings/section';
 import { api } from '@/lib/api';
+import { checkForUpdates } from '@/lib/desktop';
+import { isTauri } from '@/lib/platform';
 import { keys, reportError, useMe } from '@/lib/queries';
 import { useSession } from '@/lib/session';
 import { useUi } from '@/lib/ui-store';
@@ -74,6 +76,14 @@ export default function ProfileSettings() {
           <Switch checked={me.requireDeviceApproval} onCheckedChange={(v) => save({ requireDeviceApproval: v })} aria-label="Require device approval" />
         </SettingRow>
       </Section>
+
+      {isTauri() && (
+        <Section title="Desktop app" description="Quick Add from anywhere with ⌥⌘Space (macOS) or Alt+Ctrl+Space. Closing the window keeps Remindora in the tray so reminders keep arriving.">
+          <SettingRow label="Updates">
+            <Button size="sm" onClick={async () => { try { const r = await checkForUpdates(); toast(r === 'none' ? 'You’re up to date' : 'Updating…'); } catch (e) { reportError(e, 'Update check failed'); } }}>Check for updates</Button>
+          </SettingRow>
+        </Section>
+      )}
 
       <Section title="Keyboard shortcuts">
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">

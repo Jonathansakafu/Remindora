@@ -48,7 +48,7 @@
     "msgpackr-extract@3.0.4": true
   },
   "overrides": {
-    "react": "19.1.10",
-    "react-dom": "19.1.10"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   }
 }
