@@ -2,10 +2,12 @@
 import { Button, DialogContent, Dialog, Field, Input, Select, Spinner, Textarea } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlarmClock } from 'lucide-react';
+import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, normalizeAlarmSound, type AlarmSound } from '@remindora/core';
+import { AlarmClock, Play } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { previewAlarmSound } from '@/lib/alarm';
 import { api } from '@/lib/api';
 import { reportError } from '@/lib/queries';
 import { REPEAT_OPTIONS, repeatFromRrule, useReminderForm, type RepeatValue } from '@/lib/reminder-form';
@@ -14,11 +16,11 @@ import { useSession } from '@/lib/session';
 function defaults(tz: string, task: TaskDTO | null) {
   if (task?.dueAt) {
     const d = DateTime.fromISO(task.dueAt).setZone(tz);
-    return { title: task.title, notes: task.description ?? '', date: d.toISODate()!, time: d.toFormat('HH:mm'), repeat: repeatFromRrule(task.recurrence?.rrule) };
+    return { title: task.title, notes: task.description ?? '', date: d.toISODate()!, time: d.toFormat('HH:mm'), repeat: repeatFromRrule(task.recurrence?.rrule), sound: normalizeAlarmSound(task.alarmSound) };
   }
   // Next full hour, so the default is always in the future.
   const next = DateTime.now().setZone(tz).plus({ hours: 1 }).startOf('hour');
-  return { title: task?.title ?? '', notes: task?.description ?? '', date: next.toISODate()!, time: next.toFormat('HH:mm'), repeat: 'none' as RepeatValue };
+  return { title: task?.title ?? '', notes: task?.description ?? '', date: next.toISODate()!, time: next.toFormat('HH:mm'), repeat: 'none' as RepeatValue, sound: DEFAULT_ALARM_SOUND as AlarmSound };
 }
 
 /** The "form to fill" for a reminder: what, when, how often. */
@@ -46,6 +48,7 @@ export function ReminderForm() {
       description: form.notes.trim() || null,
       dueAt: when.toUTC().toISO(),
       allDay: false,
+      alarmSound: form.sound,
       recurrence: rrule ? { rrule } : null,
     };
     try {
@@ -84,6 +87,20 @@ export function ReminderForm() {
                 </option>
               ))}
             </Select>
+          </Field>
+          <Field label="Sound" htmlFor="rf-sound">
+            <div className="flex gap-2">
+              <Select id="rf-sound" value={form.sound} onChange={(e) => setForm({ ...form, sound: e.target.value as AlarmSound })} className="h-12 flex-1 text-base">
+                {ALARM_SOUNDS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+              <Button size="lg" variant="secondary" className="h-12" onClick={() => previewAlarmSound(form.sound)} aria-label="Play this sound">
+                <Play size={17} /> Play
+              </Button>
+            </div>
           </Field>
           <Field label="Notes (optional)" htmlFor="rf-notes">
             <Textarea id="rf-notes" rows={2} maxLength={2000} placeholder="Anything else to remember" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />

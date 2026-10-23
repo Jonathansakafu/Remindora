@@ -231,6 +231,7 @@ export class TasksService {
           dueAt: input.dueAt ? new Date(input.dueAt) : null,
           allDay: input.allDay,
           durationMinutes: input.durationMinutes ?? null,
+          alarmSound: input.alarmSound ?? null,
           completedAt: input.status === 'DONE' ? new Date() : null,
           completedById: input.status === 'DONE' ? userId : null,
           sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
@@ -393,7 +394,7 @@ export class TasksService {
 
     const user = await this.user(userId);
     const data: Prisma.TaskUncheckedUpdateInput = { version: merge.nextVersion, fieldVersions: merge.nextFieldVersions };
-    for (const key of ['title', 'description', 'sectionId', 'priority', 'assigneeId', 'allDay', 'durationMinutes', 'archived', 'sortOrder'] as const) {
+    for (const key of ['title', 'description', 'sectionId', 'priority', 'assigneeId', 'allDay', 'durationMinutes', 'alarmSound', 'archived', 'sortOrder'] as const) {
       if (key in apply) (data as Record<string, unknown>)[key] = apply[key];
     }
     if ('status' in apply) data.status = apply.status as Task['status'];
@@ -519,6 +520,7 @@ export class TasksService {
           startAt: full.startAt ? new Date(full.startAt.getTime() + delta) : null,
           allDay: full.allDay,
           durationMinutes: full.durationMinutes,
+          alarmSound: full.alarmSound,
           sortOrder: full.sortOrder,
           recurrenceId: full.recurrenceId,
           seriesId: full.seriesId ?? full.id,
@@ -666,6 +668,7 @@ export class TasksService {
       dueAt: t.dueAt,
       allDay: t.allDay,
       durationMinutes: t.durationMinutes,
+      alarmSound: t.alarmSound as CreateTaskInput['alarmSound'],
       recurrence: t.recurrence ? { rrule: t.recurrence.rrule, mode: t.recurrence.mode, until: t.recurrence.until } : null,
       reminders: t.reminders.filter((r) => !r.subtaskId).map((r) => ({ offsetMinutes: r.offsetMinutes ?? undefined, at: r.at ?? undefined, constant: r.constant })),
       checklist: t.subtasks.map((s) => s.title),

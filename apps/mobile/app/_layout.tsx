@@ -84,9 +84,9 @@ export default function RootLayout() {
   // A reminder arriving while the app is open rings the full-screen alarm.
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((n) => {
-      const data = n.request.content.data as { type?: string; notificationId?: string; taskId?: string };
+      const data = n.request.content.data as { type?: string; notificationId?: string; taskId?: string; sound?: string };
       if (data.type === 'reminder' && data.notificationId) {
-        useAlarm.getState().ring({ notificationId: data.notificationId, taskId: data.taskId || null, title: n.request.content.title ?? 'Reminder', body: n.request.content.body ?? '' });
+        useAlarm.getState().ring({ notificationId: data.notificationId, taskId: data.taskId || null, title: n.request.content.title ?? 'Reminder', body: n.request.content.body ?? '', sound: data.sound });
       }
     });
     return () => sub.remove();

@@ -195,6 +195,27 @@ describe('priority notification engine', () => {
   });
 });
 
+describe('reminder sounds', () => {
+  it('keeps the sound chosen in the form and rings the phone on that sound’s alarm channel', async () => {
+    const { desktop, desktopSocket, phoneSocket } = await twoDevices();
+    const created = await h.http().post('/tasks').set(auth(desktop.accessToken)).send({ title: 'Bell reminder', dueAt: new Date().toISOString(), alarmSound: 'bell' }).expect(201);
+    expect(created.body.alarmSound).toBe('bell');
+    await h.http().post('/tasks').set(auth(desktop.accessToken)).send({ title: 'x', alarmSound: 'trumpet' }).expect(400);
+
+    const before = pushes.length;
+    const fired = await fireReminder(deps, { reminderId: created.body.reminders[0].id, fireAt: new Date().toISOString() }, scheduler);
+    expect(fired.status).toBe('fired');
+    const push = pushes.slice(before).find((p) => (p.msg as { title?: string }).title === 'Bell reminder')!.msg as { channelId: string; data: Record<string, string> };
+    expect(push.channelId).toBe('remindora-alarm-bell');
+    expect(push.data.sound).toBe('bell');
+
+    const edited = await h.http().patch(`/tasks/${created.body.id}`).set(auth(desktop.accessToken)).send({ alarmSound: 'silent' }).expect(200);
+    expect(edited.body.alarmSound).toBe('silent');
+    desktopSocket.disconnect();
+    phoneSocket.disconnect();
+  });
+});
+
 describe('cross-device sync', () => {
   it('pushes edits to other devices in real time and serves an incremental change feed with tombstones', async () => {
     const { desktop, phone, desktopSocket, phoneSocket } = await twoDevices();

@@ -90,8 +90,8 @@ export async function deliver(d: Deps, n: Notification, channels: NotificationCh
   const msg: PushMessage = {
     title: n.title,
     body: n.body,
-    data: { type: n.kind.toLowerCase(), notificationId: n.id, reminderId: n.reminderId ?? '', taskId: n.taskId ?? '', priority: n.priority, url: opts.link },
-    channelId: androidChannelForNotification(n.kind, n.priority).id,
+    data: { type: n.kind.toLowerCase(), notificationId: n.id, reminderId: n.reminderId ?? '', taskId: n.taskId ?? '', priority: n.priority, url: opts.link, sound: String((n.data as { sound?: string } | null)?.sound ?? 'alarm') },
+    channelId: androidChannelForNotification(n.kind, n.priority, (n.data as { sound?: string } | null)?.sound).id,
     tag: n.reminderId ?? n.id,
     categoryId: n.reminderId ? REMINDER_CATEGORY : undefined,
     sound: !opts.silent,

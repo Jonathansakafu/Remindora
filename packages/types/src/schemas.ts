@@ -31,6 +31,9 @@ export const reminderInput = z.object({
   subtaskId: z.uuid().optional(),
 });
 
+/** Reminder alarm sounds (labels live in @remindora/core sounds.ts). */
+export const alarmSoundInput = z.enum(['alarm', 'bell', 'chime', 'digital', 'siren', 'silent']);
+
 export const createTaskInput = z.object({
   title: z.string().trim().min(1).max(500),
   description: z.string().max(50_000).nullish(),
@@ -45,6 +48,7 @@ export const createTaskInput = z.object({
   dueAt: isoDate.nullish(),
   allDay: z.boolean().default(false),
   durationMinutes: z.number().int().min(1).max(60 * 24 * 14).nullish(),
+  alarmSound: alarmSoundInput.nullish(),
   recurrence: recurrenceInput.nullish(),
   /** Omit to get priority-based default reminders; pass [] for none. */
   reminders: z.array(reminderInput).max(10).optional(),
@@ -69,6 +73,7 @@ export const updateTaskInput = z
     dueAt: isoDate.nullable(),
     allDay: z.boolean(),
     durationMinutes: z.number().int().min(1).max(60 * 24 * 14).nullable(),
+    alarmSound: alarmSoundInput.nullable(),
     isFavorite: z.boolean(),
     archived: z.boolean(),
     sortOrder: z.number(),

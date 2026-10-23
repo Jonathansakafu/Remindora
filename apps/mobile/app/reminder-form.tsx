@@ -1,4 +1,4 @@
-import { REPEAT_OPTIONS, repeatFromRrule, rruleFor, type RepeatValue } from '@remindora/core';
+import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, normalizeAlarmSound, REPEAT_OPTIONS, repeatFromRrule, rruleFor, type AlarmSound, type RepeatValue } from '@remindora/core';
 import type { TaskDTO } from '@remindora/types';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Screen } from '../src/components/ui';
+import { previewAlarm } from '../src/lib/alarm';
 import { api } from '../src/lib/api';
 import { useSystemBottom } from '../src/lib/layout';
 import { refetchTasks } from '../src/lib/queries';
@@ -29,6 +30,7 @@ export default function ReminderForm() {
   const [notes, setNotes] = useState('');
   const [when, setWhen] = useState(() => DateTime.now().setZone(tz).plus({ hours: 1 }).startOf('hour'));
   const [repeat, setRepeat] = useState<RepeatValue>('none');
+  const [sound, setSound] = useState<AlarmSound>(DEFAULT_ALARM_SOUND);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function ReminderForm() {
       setNotes(t.description ?? '');
       if (t.dueAt) setWhen(DateTime.fromISO(t.dueAt).setZone(tz));
       setRepeat(repeatFromRrule(t.recurrence?.rrule));
+      setSound(normalizeAlarmSound(t.alarmSound));
     });
   }, [id, tz]);
 
@@ -65,7 +68,7 @@ export default function ReminderForm() {
     if (inPast) return Alert.alert('That time has passed', 'Pick a later time or another day.');
     setBusy(true);
     const rrule = rruleFor(repeat);
-    const body = { title: title.trim(), description: notes.trim() || null, dueAt: when.toUTC().toISO(), allDay: false, recurrence: rrule ? { rrule } : null };
+    const body = { title: title.trim(), description: notes.trim() || null, dueAt: when.toUTC().toISO(), allDay: false, alarmSound: sound, recurrence: rrule ? { rrule } : null };
     try {
       if (id) await api(`/tasks/${id}`, { method: 'PATCH', body });
       else await api('/tasks', { body: { ...body, description: body.description ?? undefined, recurrence: body.recurrence ?? undefined } });
@@ -115,6 +118,24 @@ export default function ReminderForm() {
                 <Pressable key={o.value} onPress={() => setRepeat(o.value)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: on ? colors.cyan : colors.border, backgroundColor: on ? 'rgba(96,233,255,0.15)' : 'transparent' }}>
                   <Text style={{ color: on ? colors.cyan : colors.text, fontWeight: '600' }}>{o.label}</Text>
                 </Pressable>
+              );
+            })}
+          </View>
+
+          <Label>Sound</Label>
+          <View style={{ gap: 8 }}>
+            {ALARM_SOUNDS.map((o) => {
+              const on = sound === o.value;
+              return (
+                <View key={o.value} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Pressable onPress={() => setSound(o.value)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, height: 48, borderRadius: 12, borderWidth: 1, borderColor: on ? colors.cyan : colors.border, backgroundColor: on ? 'rgba(96,233,255,0.15)' : 'transparent' }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: on ? colors.cyan : colors.borderStrong, alignItems: 'center', justifyContent: 'center' }}>{on ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.cyan }} /> : null}</View>
+                    <Text style={{ color: on ? colors.cyan : colors.text, fontWeight: '600' }}>{o.label}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => void previewAlarm(o.value)} accessibilityRole="button" accessibilityLabel={`Play ${o.label}`} style={{ width: 48, height: 48, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: colors.text, fontSize: 16 }}>▶</Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>

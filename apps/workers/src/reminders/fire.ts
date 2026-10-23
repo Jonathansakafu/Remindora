@@ -92,7 +92,7 @@ export async function fireReminder(d: Deps, job: FireReminderJob, scheduler: Sch
             body: `${task.project.name} · due ${whenLabel}${repeatNote}`,
             silent: decision.silent,
             dedupeKey: key,
-            data: { attempt: r.attempt, occurrence: occurrence.toISOString() },
+            data: { attempt: r.attempt, occurrence: occurrence.toISOString(), sound: task.alarmSound ?? 'alarm' },
           },
         }));
       notificationId = n.id;

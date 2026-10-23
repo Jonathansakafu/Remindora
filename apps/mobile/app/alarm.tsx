@@ -24,7 +24,7 @@ export default function AlarmScreen() {
       return;
     }
     setNow(new Date());
-    void startAlarm();
+    void startAlarm(current.sound);
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, [current]);

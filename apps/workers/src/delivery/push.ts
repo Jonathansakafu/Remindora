@@ -1,5 +1,11 @@
-import { ALARM_SOUND, ANDROID_CHANNELS } from '@remindora/notifications';
+import { ALARM_SOUND_CHANNELS, isAlarmChannel } from '@remindora/notifications';
 import type { ServerEnv } from '@remindora/config';
+
+/** Pre-Android-8 fallback; on 8+ the channel's own sound plays. Vibrate-only sends no sound. */
+function alarmSoundField(channelId: string) {
+  const raw = Object.values(ALARM_SOUND_CHANNELS).find((c) => c.id === channelId)?.raw;
+  return raw ? { sound: raw } : {};
+}
 import { createSign } from 'node:crypto';
 import type pino from 'pino';
 import webpush from 'web-push';
@@ -72,8 +78,8 @@ function fcmProvider(env: ServerEnv, log: pino.Logger): PushProviders['fcm'] {
                 channel_id: msg.channelId,
                 tag: msg.tag,
                 // Alarm channel: its own ringing sound, top priority, shown on the lock screen.
-                ...(msg.channelId === ANDROID_CHANNELS.alarm.id
-                  ? { sound: ALARM_SOUND, notification_priority: 'PRIORITY_MAX', visibility: 'PUBLIC', default_vibrate_timings: true }
+                ...(isAlarmChannel(msg.channelId)
+                  ? { ...alarmSoundField(msg.channelId), notification_priority: 'PRIORITY_MAX', visibility: 'PUBLIC', default_vibrate_timings: true }
                   : msg.sound
                     ? { default_sound: true }
                     : {}),

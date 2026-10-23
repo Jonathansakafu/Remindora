@@ -35,6 +35,7 @@ export function toTaskDTO(t: TaskRow): TaskDTO {
     dueAt: iso(t.dueAt),
     allDay: t.allDay,
     durationMinutes: t.durationMinutes,
+    alarmSound: t.alarmSound,
     completedAt: iso(t.completedAt),
     isFavorite: t.favorites.length > 0,
     archived: t.archived,

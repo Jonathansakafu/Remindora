@@ -1,4 +1,4 @@
-import { ANDROID_CHANNELS, REMINDER_CATEGORY } from '@remindora/notifications/dist/android';
+import { ALARM_SOUND_CHANNELS, ANDROID_CHANNELS, isAlarmChannel, REMINDER_CATEGORY } from '@remindora/notifications/dist/android';
 import * as Device from 'expo-device';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Notifications from 'expo-notifications';
@@ -21,7 +21,7 @@ const IMPORTANCE = {
 export async function setupChannelsAndActions() {
   if (Platform.OS !== 'android') return;
   for (const c of Object.values(ANDROID_CHANNELS)) {
-    if (c.id === ANDROID_CHANNELS.alarm.id) continue;
+    if (isAlarmChannel(c.id)) continue;
     await Notifications.setNotificationChannelAsync(c.id, {
       name: c.name,
       importance: IMPORTANCE[c.importance],
@@ -32,12 +32,13 @@ export async function setupChannelsAndActions() {
       lightColor: '#60E9FF',
     });
   }
-  // Reminders ring here: alarm sound on the alarm volume stream, long vibration, shown on the lock screen.
-  await Notifications.setNotificationChannelAsync(ANDROID_CHANNELS.alarm.id, {
-    name: ANDROID_CHANNELS.alarm.name,
+  // Reminders ring on these: one channel per sound (Android fixes a channel's sound), alarm volume
+  // stream, long vibration, shown on the lock screen.
+  for (const c of Object.values(ALARM_SOUND_CHANNELS)) await Notifications.setNotificationChannelAsync(c.id, {
+    name: c.name,
     description: 'Rings like an alarm clock when a reminder is due',
     importance: Notifications.AndroidImportance.MAX,
-    sound: 'remindora_alarm.wav',
+    sound: c.raw ? `${c.raw}.wav` : null,
     audioAttributes: { usage: Notifications.AndroidAudioUsage.ALARM, contentType: Notifications.AndroidAudioContentType.SONIFICATION },
     bypassDnd: true,
     enableVibrate: true,

@@ -113,6 +113,8 @@ export interface TaskDTO {
   dueAt: string | null;
   allDay: boolean;
   durationMinutes: number | null;
+  /** Reminder alarm sound; null = default alarm. */
+  alarmSound: string | null;
   completedAt: string | null;
   isFavorite: boolean;
   archived: boolean;

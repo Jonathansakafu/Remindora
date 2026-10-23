@@ -1,7 +1,8 @@
 'use client';
 import { Button, cn, GlassPanel, Spinner } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
-import { AlarmClock, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
+import { alarmSoundLabel } from '@remindora/core';
+import { AlarmClock, Bell, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useMemo } from 'react';
 import { useCompleteTask, useDeleteTask, useTasks } from '@/lib/queries';
@@ -35,6 +36,11 @@ function ReminderRow({ task, tz, missed }: { task: TaskDTO; tz: string; missed: 
             {repeat && (
               <span className="inline-flex items-center gap-1">
                 <Repeat size={13} /> {repeat}
+              </span>
+            )}
+            {task.alarmSound && task.alarmSound !== 'alarm' && (
+              <span className="inline-flex items-center gap-1">
+                <Bell size={13} /> {alarmSoundLabel(task.alarmSound)}
               </span>
             )}
             {task.description && <span className="truncate">{task.description}</span>}

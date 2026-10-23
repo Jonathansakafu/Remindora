@@ -26,7 +26,7 @@ export function connectRealtime(qc: QueryClient) {
   s.on('notification.created', ({ notification, alert }) => {
     void qc.invalidateQueries({ queryKey: keys.notifications });
     if (notification.kind === 'REMINDER' && alert?.sound !== false) {
-      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body });
+      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body, sound: String(notification.data?.sound ?? 'alarm') });
     }
   });
   // Resolved on another device: clear our tray copy immediately (the data push does this when we're in the background).

@@ -34,7 +34,7 @@ export function AlarmOverlay() {
     }
     setNow(new Date());
     void surfaceWindow();
-    void startAlarmSound().then((ok) => setBlocked(!ok));
+    void startAlarmSound(current.sound).then((ok) => setBlocked(!ok));
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, [current]);
@@ -70,7 +70,7 @@ export function AlarmOverlay() {
         </p>
 
         {blocked && (
-          <button type="button" onClick={() => void startAlarmSound().then((ok) => setBlocked(!ok))} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber/40 bg-amber/10 px-3 py-2 text-sm text-amber">
+          <button type="button" onClick={() => void startAlarmSound(current.sound).then((ok) => setBlocked(!ok))} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber/40 bg-amber/10 px-3 py-2 text-sm text-amber">
             <Volume2 size={16} /> Tap to play the alarm sound
           </button>
         )}

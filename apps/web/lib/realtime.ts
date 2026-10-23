@@ -75,7 +75,7 @@ export function connectRealtime(qc: QueryClient, handlers: { onOpenTask: (id: st
       void nativeNotify({ title: notification.title, body: notification.body, tag: notification.reminderId ?? notification.id, urgent: notification.priority === 'CRITICAL', onClick: open });
     }
     if (notification.kind === 'REMINDER' && alert?.sound !== false) {
-      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body });
+      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body, sound: String(notification.data?.sound ?? 'alarm') });
     }
   });
   s.on('notification.resolved', ({ notificationId, reminderId }) => {

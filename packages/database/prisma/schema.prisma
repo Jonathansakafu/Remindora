@@ -363,6 +363,8 @@ model Task {
   startAt           DateTime?       @db.Timestamptz(3)
   dueAt             DateTime?       @db.Timestamptz(3)
   allDay            Boolean         @default(false)
+  /// Reminder alarm sound (alarm | bell | chime | digital | siren | silent). Null = default alarm.
+  alarmSound        String?
   durationMinutes   Int?
   completedAt       DateTime?       @db.Timestamptz(3)
   completedById     String?         @db.Uuid

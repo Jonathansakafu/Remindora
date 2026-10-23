@@ -113,8 +113,9 @@ test('reminder form sets a reminder that rings as a full-screen alarm', async ({
   await page.getByLabel('What should I remind you about?').fill('Take medicine');
   await page.getByLabel('Date').fill(due.toISOString().slice(0, 10));
   await page.getByLabel('Time').fill(due.toISOString().slice(11, 16));
+  await page.getByLabel('Sound', { exact: true }).selectOption('bell');
   await page.getByRole('button', { name: 'Set reminder' }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Take medicine' })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Take medicine' })).toContainText('Bell');
 
   const alarm = page.getByRole('alertdialog');
   await expect(alarm).toBeVisible({ timeout: 200_000 });
