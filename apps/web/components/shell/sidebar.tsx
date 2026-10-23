@@ -1,12 +1,12 @@
 'use client';
 import { Avatar, Button, cn, Dialog, DialogContent, Field, Input, Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, RemindoraMark, Select } from '@remindora/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, Folder, Hash, LogOut, Plus, Settings, Smartphone, Sparkles, Users } from 'lucide-react';
+import { ChevronDown, Folder, Hash, LogOut, Plus, Settings, Smartphone, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
-import { keys, reportError, useEntitlements, useFilters, useProjects, useWorkspaces } from '@/lib/queries';
+import { keys, reportError, useFilters, useProjects, useWorkspaces } from '@/lib/queries';
 import { useSession } from '@/lib/session';
 import { useUi } from '@/lib/ui-store';
 import { primaryNav, secondaryNav } from './nav';
@@ -38,7 +38,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: projects = [] } = useProjects();
   const { data: workspaces = [] } = useWorkspaces();
   const { data: filters = [] } = useFilters();
-  const { data: ent } = useEntitlements();
   const [newList, setNewList] = useState(false);
   const [name, setName] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
@@ -72,7 +71,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex items-center gap-2.5 px-3 pb-4 pt-1">
         <RemindoraMark size={30} />
         <span className="font-display text-[17px] font-semibold tracking-tight">Remindora</span>
-        {ent?.plan && ent.plan !== 'FREE' && <span className="ml-auto rounded-md border border-amber/30 bg-amber/10 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber">{ent.plan}</span>}
       </div>
 
       <div className="scroll-thin -mx-1 flex-1 space-y-5 overflow-y-auto px-1">
@@ -153,7 +151,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             <MenuLabel>Account</MenuLabel>
             <MenuItem onSelect={() => router.push('/app/settings')}><Settings size={15} /> Settings</MenuItem>
             <MenuItem onSelect={() => router.push('/app/settings/devices')}><Smartphone size={15} /> Linked devices</MenuItem>
-            <MenuItem onSelect={() => router.push('/app/settings/billing')}><Sparkles size={15} /> Plans & billing</MenuItem>
             <MenuSeparator />
             <MenuItem
               danger
@@ -170,7 +167,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <Dialog open={newList} onOpenChange={setNewList}>
-        <DialogContent title="New list" description={ent ? `Your plan allows ${ent.limits['lists.max']} lists.` : undefined}>
+        <DialogContent title="New list" description="Group related tasks into a list.">
           <form onSubmit={createList} className="space-y-4">
             <Field label="Name" htmlFor="list-name">
               <Input id="list-name" autoFocus required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Launch plan" />

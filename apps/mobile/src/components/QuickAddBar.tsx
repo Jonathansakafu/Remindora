@@ -40,6 +40,7 @@ export function QuickAddBar({ projectId, placeholder = 'Add a task… e.g. “Ca
 
   const chips: string[] = [];
   if (parsed?.dueAt) chips.push(DateTime.fromISO(parsed.dueAt).setZone(tz).toFormat(parsed.allDay ? 'ccc d LLL' : 'ccc d LLL, HH:mm'));
+  if (parsed?.dueAt && !parsed.allDay) chips.push(`🔔 reminder at ${DateTime.fromISO(parsed.dueAt).setZone(tz).toFormat('HH:mm')}`);
   if (parsed?.recurrence) chips.push('repeats');
   if (parsed?.priority) chips.push(parsed.priority.toLowerCase());
   for (const t of parsed?.tags ?? []) chips.push(`#${t}`);

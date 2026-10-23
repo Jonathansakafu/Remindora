@@ -134,7 +134,7 @@ export function scheduleTaskRefetch(qc: QueryClient) {
 export function reportError(e: unknown, fallback = 'Something went wrong') {
   if (e instanceof ApiError) {
     if (e.isPlanGate) {
-      toast(e.message, { description: 'Remindora Premium lifts this limit.', action: { label: 'See plans', onClick: () => (window.location.href = '/app/settings/billing') } });
+      toast(e.message, { description: 'Archive or delete a few to make room.' });
       return;
     }
     if (e.isNetwork) {

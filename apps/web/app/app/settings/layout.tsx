@@ -7,7 +7,6 @@ const TABS = [
   { href: '/app/settings', label: 'Profile & appearance' },
   { href: '/app/settings/notifications', label: 'Notifications' },
   { href: '/app/settings/devices', label: 'Linked devices' },
-  { href: '/app/settings/billing', label: 'Plans & billing' },
   { href: '/app/settings/integrations', label: 'Integrations' },
   { href: '/app/settings/workspace', label: 'Workspaces' },
   { href: '/app/settings/templates', label: 'Templates' },

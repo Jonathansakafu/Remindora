@@ -50,7 +50,7 @@ export default function Home() {
               Remindora brings your tasks, calendar, habits and focus time together — and reminds you based on what’s actually important.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/register" className="inline-flex h-12 items-center gap-2 rounded-xl bg-cyan px-6 text-base font-semibold text-on-accent shadow-[0_8px_24px_-8px_rgb(96_233_255/0.6)] hover:bg-[#8af0ff]">
+              <Link href="/register" className="inline-flex h-12 items-center gap-2 rounded-xl bg-cyan px-6 text-base font-semibold text-on-accent shadow-[0_8px_24px_-8px_rgb(96_233_255/0.6)] hover:brightness-110">
                 Get started free <ArrowRight size={17} />
               </Link>
               <Link href="#download" className="glass inline-flex h-12 items-center gap-2 rounded-xl px-6 text-base font-medium hover:border-line-strong">
@@ -178,7 +178,7 @@ export default function Home() {
         <div className="mx-auto max-w-4xl rounded-3xl border border-cyan/25 bg-[linear-gradient(135deg,rgb(96_233_255/0.14),rgb(165_140_255/0.12))] p-8 text-center md:p-12">
           <h2 className="font-display text-3xl font-semibold tracking-tight">Start remembering what matters</h2>
           <p className="mx-auto mt-3 max-w-xl text-ink-muted">Free forever for personal use. Create your account in under a minute.</p>
-          <Link href="/register" className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan px-6 font-semibold text-on-accent hover:bg-[#8af0ff]">
+          <Link href="/register" className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan px-6 font-semibold text-on-accent hover:brightness-110">
             Create free account <ArrowRight size={17} />
           </Link>
         </div>

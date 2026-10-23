@@ -105,40 +105,23 @@ export default function ServicesPage() {
       </section>
 
       <section aria-labelledby="plans-h" className="px-4 py-14">
-        <div className="mx-auto max-w-6xl">
-          <h2 id="plans-h" className="text-center font-display text-3xl font-semibold tracking-tight">Simple plans</h2>
-          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-2">
-            <GlassPanel glow className="flex flex-col p-7">
-              <h3 className="font-display text-xl font-semibold">Free</h3>
-              <p className="mt-1 font-display text-3xl font-semibold">
-                $0<span className="text-sm font-normal text-ink-faint"> / forever</span>
-              </p>
-              <ul className="mt-5 flex-1 space-y-2 text-sm">
-                {['Tasks, projects and calendar', 'Reminders on every device', 'Habits and focus timer', 'Sync across web, desktop and Android'].map((p) => (
-                  <li key={p} className="flex gap-2">
-                    <Check size={15} className="mt-0.5 text-success" /> {p}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/register" className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan font-semibold text-on-accent hover:bg-[#8af0ff]">
-                Get started <ArrowRight size={16} />
-              </Link>
-            </GlassPanel>
-            <GlassPanel className="flex flex-col p-7">
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-xl font-semibold">Premium</h3>
-                <span className="rounded-full bg-amber/15 px-2 py-0.5 text-xs font-medium text-amber">Coming soon</span>
-              </div>
-              <p className="mt-1 text-sm text-ink-muted">For power users and teams.</p>
-              <ul className="mt-5 flex-1 space-y-2 text-sm">
-                {['Advanced views and filters', 'Persistent reminders for critical tasks', 'Detailed reports and full history', 'Team workspaces'].map((p) => (
-                  <li key={p} className="flex gap-2">
-                    <Check size={15} className="mt-0.5 text-ink-faint" /> {p}
-                  </li>
-                ))}
-              </ul>
-            </GlassPanel>
-          </div>
+        <div className="mx-auto max-w-3xl">
+          <GlassPanel glow className="p-8 text-center md:p-10">
+            <h2 id="plans-h" className="font-display text-3xl font-semibold tracking-tight">
+              Free. Everything included.
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-ink-muted">No plans, no trials, no locked features. Every service on this page is available to everyone, on every device.</p>
+            <ul className="mx-auto mt-6 grid max-w-xl gap-2 text-left text-sm sm:grid-cols-2">
+              {['Unlimited-feeling lists and tasks', 'Reminders on phone, desktop, browser and email', 'Calendar, habits, focus and reports', 'Teams, sharing and full history'].map((p) => (
+                <li key={p} className="flex gap-2">
+                  <Check size={15} className="mt-0.5 shrink-0 text-success" /> {p}
+                </li>
+              ))}
+            </ul>
+            <Link href="/register" className="mt-8 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan px-6 font-semibold text-on-accent hover:brightness-110">
+              Create your free account <ArrowRight size={16} />
+            </Link>
+          </GlassPanel>
         </div>
       </section>
 

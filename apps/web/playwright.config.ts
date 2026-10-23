@@ -51,7 +51,10 @@ export default defineConfig({
   reporter: [['list']],
   globalSetup: './e2e/global-setup.ts',
   globalTeardown: './e2e/global-teardown.ts',
-  use: { baseURL: `http://localhost:${WEB_PORT}`, trace: 'retain-on-failure', ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+  use: { baseURL: `http://localhost:${WEB_PORT}`, trace: 'retain-on-failure', ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 },
+    // Accounts start on UTC; a UTC browser keeps the app's device-timezone adoption from changing zones mid-test.
+    timezoneId: 'UTC',
+  },
   webServer: [
     { command: 'npx prisma migrate deploy --schema ../../packages/database/prisma/schema.prisma && node dist/main.js', cwd: resolve(root, 'apps/api'), url: `http://localhost:${API_PORT}/health`, env: E2E_ENV, reuseExistingServer: false, timeout: 60_000 },
     { command: `npx next build && npx next start -p ${WEB_PORT}`, cwd: __dirname, url: `http://localhost:${WEB_PORT}/login`, env: E2E_ENV, reuseExistingServer: false, timeout: 300_000 },

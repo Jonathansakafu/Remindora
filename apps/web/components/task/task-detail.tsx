@@ -199,7 +199,7 @@ function TaskDetailBody({ task, onClose }: { task: TaskDTO; onClose: () => void 
               label="Priority"
               value={task.priority}
               onChange={(v) => !readOnly && patch({ priority: v })}
-              options={(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const).map((p) => ({ value: p, label: <span style={{ color: priorityMeta[p].color }}>{priorityMeta[p].label}</span> }))}
+              options={(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const).map((p) => ({ value: p, label: <span style={{ color: priorityMeta[p].cssVar }}>{priorityMeta[p].label}</span> }))}
             />
           </Row>
           <Row label="Due" icon={CalendarClock}>
@@ -474,7 +474,7 @@ function AddReminder({ task, canConstant, onAdd }: { task: TaskDTO; canConstant:
           </option>
         ))}
       </Select>
-      <label className="flex items-center gap-1.5 text-xs text-ink-muted" title="Keeps alerting until you act (Premium)">
+      <label className="flex items-center gap-1.5 text-xs text-ink-muted" title="Keeps alerting until you act">
         <Switch checked={constant} onCheckedChange={setConstant} disabled={!canConstant} aria-label="Constant reminder" /> Constant {!canConstant && <Sparkles size={11} className="text-amber" />}
       </label>
       <Button size="sm" disabled={!task.dueAt} title={!task.dueAt ? 'Set a due date first' : undefined} onClick={() => onAdd({ offsetMinutes: Number(offset), constant })}>

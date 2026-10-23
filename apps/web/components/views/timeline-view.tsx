@@ -1,5 +1,5 @@
 'use client';
-import { Button, cn, EmptyState, priorityMeta } from '@remindora/ui';
+import { Button, cn, EmptyState, priorityMeta, withAlpha } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
 import { ChevronLeft, ChevronRight, GanttChart, Sparkles } from 'lucide-react';
 import { DateTime } from 'luxon';
@@ -102,7 +102,7 @@ export function TimelineView({ tasks }: { tasks: TaskDTO[] }) {
             })}
           </div>
           {rows.map(({ t, start, end }) => {
-            const color = priorityMeta[t.priority as keyof typeof priorityMeta].color;
+            const color = priorityMeta[t.priority as keyof typeof priorityMeta].cssVar;
             const isDragging = drag?.id === t.id;
             const left = offset(start) * DAY_W + (isDragging && drag.mode === 'move' ? drag.dx : 0);
             const width = (offset(end) - offset(start) + 1) * DAY_W + (isDragging && drag.mode === 'resize' ? drag.dx : 0);
@@ -124,7 +124,7 @@ export function TimelineView({ tasks }: { tasks: TaskDTO[] }) {
                     }}
                     onPointerDown={(e) => setDrag({ id: t.id, mode: 'move', startX: e.clientX, dx: 0 })}
                     className={cn('absolute top-1/2 flex h-7 -translate-y-1/2 cursor-grab items-center rounded-lg px-2 text-[11px] font-medium text-ink', isDragging && 'cursor-grabbing shadow-[var(--shadow-lift)]', t.completedAt && 'opacity-50')}
-                    style={{ left, width: Math.max(DAY_W - 6, width - 6), background: `linear-gradient(90deg, ${color}55, ${color}22)`, border: `1px solid ${color}88` }}
+                    style={{ left, width: Math.max(DAY_W - 6, width - 6), background: `linear-gradient(90deg, ${withAlpha(color, 0.33)}, ${withAlpha(color, 0.13)})`, border: `1px solid ${withAlpha(color, 0.53)}` }}
                   >
                     <span className="truncate">{t.title}</span>
                     <span

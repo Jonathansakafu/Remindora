@@ -20,8 +20,8 @@ export const Errors = {
   gone: (message: string, code = 'gone') => new AppError(HttpStatus.GONE, code, message),
   tooMany: (retryAfter: number) => new AppError(HttpStatus.TOO_MANY_REQUESTS, 'rate_limited', 'Too many requests, slow down', { retryAfter }),
   planLimit: (key: string, limit: number, label: string) =>
-    new AppError(HttpStatus.PAYMENT_REQUIRED, 'plan_limit', `Your plan allows up to ${limit} ${label}. Upgrade to Premium for more.`, { key, limit }),
-  planFeature: (feature: string) => new AppError(HttpStatus.PAYMENT_REQUIRED, 'plan_feature', 'This is a Premium feature.', { feature }),
+    new AppError(HttpStatus.PAYMENT_REQUIRED, 'plan_limit', `You can have up to ${limit} ${label}.`, { key, limit }),
+  planFeature: (feature: string) => new AppError(HttpStatus.PAYMENT_REQUIRED, 'plan_feature', 'This feature isn’t available on this server.', { feature }),
   notConfigured: (what: string) => new AppError(HttpStatus.NOT_IMPLEMENTED, 'not_configured', `${what} is not configured on this server`),
 };
 

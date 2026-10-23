@@ -20,12 +20,14 @@ describe('channel selection by priority', () => {
     expect(decideChannels('CRITICAL', emailOn, { attempt: 2 }).channels).not.toContain('EMAIL');
     const repeats = resolvePrefs({ criticalEmail: true, channels: { push: true, desktop: true, webPush: true, email: true, inApp: true } });
     expect(decideChannels('CRITICAL', repeats, { attempt: 2 }).channels).toContain('EMAIL');
-    expect(decideChannels('LOW', emailOn).channels).not.toContain('EMAIL');
+    expect(decideChannels('LOW', emailOn).channels).toContain('EMAIL');
     expect(decideChannels('HIGH', resolvePrefs({})).channels).not.toContain('EMAIL');
   });
 
-  it('low/none are silent in-app items, or digest-only', () => {
-    expect(decideChannels('LOW', prefs)).toMatchObject({ channels: ['IN_APP'], silent: true, deliver: true });
+  it('low/none alert once like any reminder, or go to the digest only when chosen', () => {
+    expect(decideChannels('LOW', prefs)).toMatchObject({ channels: ['IN_APP', 'PUSH', 'DESKTOP', 'WEB_PUSH'], silent: false, deliver: true });
+    expect(decideChannels('NONE', prefs)).toMatchObject({ channels: ['IN_APP', 'PUSH', 'DESKTOP', 'WEB_PUSH'], silent: false });
+    expect(nextRealertAt({ priority: 'NONE', attempt: 0 }, prefs, t0)).toBeNull();
     expect(decideChannels('NONE', resolvePrefs({ lowPriorityMode: 'digest' }))).toMatchObject({ deliver: false });
   });
 

@@ -255,12 +255,15 @@ export class TasksService {
     return dto;
   }
 
-  /** Priority-based defaults so the notification engine works without manual setup. */
+  /**
+   * Defaults so reminders work without manual setup: a task with a time is reminded at
+   * that time (any priority); an all-day task only when it's high priority or above.
+   */
   private defaultReminders(input: CreateTaskInput): NonNullable<CreateTaskInput['reminders']> {
     if (!input.dueAt) return [];
+    if (!input.allDay) return [{ offsetMinutes: 0 }];
     const rank = { NONE: 0, LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 }[input.priority as 'NONE'];
-    if (input.allDay ? rank >= 3 : rank >= 2) return [{ offsetMinutes: 0 }];
-    return [];
+    return rank >= 3 ? [{ offsetMinutes: 0 }] : [];
   }
 
   private async findProjectByName(userId: string, name: string) {

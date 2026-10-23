@@ -104,6 +104,8 @@ export function QuickAdd() {
   if (parsed?.assignee) chips.push({ icon: User, label: `@${parsed.assignee}` });
   if (parsed?.durationMinutes) chips.push({ icon: Timer, label: `${parsed.durationMinutes} min${canDuration ? '' : ' · Premium'}`, muted: !canDuration });
   for (const r of parsed?.reminderOffsets ?? []) chips.push({ icon: BellRing, label: `${r} min before` });
+  // Mirrors the server default: a task with a time is reminded at that time.
+  if (parsed?.dueAt && !parsed.allDay && !parsed.reminderOffsets?.length) chips.push({ icon: BellRing, label: `Reminder at ${DateTime.fromISO(parsed.dueAt).setZone(tz).toFormat('HH:mm')}` });
 
   return (
     <Dialog open={open} onOpenChange={(o) => (setOpen(o), !o && setText(''))}>

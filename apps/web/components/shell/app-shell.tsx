@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { keys, useNotifications } from '@/lib/queries';
 import { initDesktop } from '@/lib/desktop';
+import { useTimezoneSync } from '@/lib/timezone-sync';
 import { connectRealtime, disconnectRealtime } from '@/lib/realtime';
 import { useSession } from '@/lib/session';
 import { useUi } from '@/lib/ui-store';
@@ -76,6 +77,7 @@ function useIsDesktop() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  useTimezoneSync();
   const status = useSession((s) => s.status);
   const accessToken = useSession((s) => s.accessToken);
   const router = useRouter();
@@ -155,7 +157,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Tooltip label="Notifications">
               <button type="button" onClick={() => ui.setNotifications(true)} className="relative rounded-xl p-2 text-ink-muted hover:bg-white/5 hover:text-ink" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}>
                 <Bell size={18} />
-                {unread > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-[#2a0610]">{unread > 99 ? '99+' : unread}</span>}
+                {unread > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-on-accent">{unread > 99 ? '99+' : unread}</span>}
               </button>
             </Tooltip>
             <Button variant="primary" size="sm" className="hidden sm:inline-flex" onClick={() => ui.setQuickAdd(true)}>

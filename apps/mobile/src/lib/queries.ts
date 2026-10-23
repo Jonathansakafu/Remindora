@@ -39,7 +39,7 @@ export function refetchTasks(qc: QueryClient) {
 }
 
 export function showError(e: unknown) {
-  if (e instanceof ApiError && e.status === 402) Alert.alert('Premium feature', e.message);
+  if (e instanceof ApiError && e.status === 402) Alert.alert('Limit reached', e.message);
   else if (e instanceof ApiError && e.isNetwork) return;
   else Alert.alert('Something went wrong', e instanceof Error ? e.message : 'Please try again.');
 }

@@ -10,7 +10,7 @@ import type { NotificationChannel, Priority } from '@remindora/types';
  *            `criticalRepeatMinutes` (default 30) until completed/snoozed/acknowledged.
  *  HIGH      due-time alert, re-alert every `highRepeatMinutes` (default 2h) until acknowledged.
  *  MEDIUM    single due-time alert, optional one follow-up.
- *  LOW/NONE  silent notification-center item, or morning digest only.
+ *  LOW/NONE  single due-time alert (no repeats), or morning digest only if the user prefers.
  *
  * Email (when the user turns it on) goes out with the first alert of every MEDIUM+
  * reminder; repeats are emailed only for CRITICAL with `criticalEmail`, so a
@@ -105,9 +105,8 @@ export function decideChannels(priority: Priority, prefs: EffectivePrefs, opts: 
   if (prefs.muted) return { deliver: inApp.length > 0, channels: inApp, silent: true, reason: 'project_muted' };
 
   const effective = opts.constant && rank(priority) < rank('HIGH') ? 'HIGH' : priority;
-  if (effective === 'NONE' || effective === 'LOW') {
-    if (prefs.lowPriorityMode === 'digest') return { deliver: false, channels: [], silent: true, reason: 'digest_only' };
-    return { deliver: inApp.length > 0, channels: inApp, silent: true, reason: 'low_priority_silent' };
+  if ((effective === 'NONE' || effective === 'LOW') && prefs.lowPriorityMode === 'digest') {
+    return { deliver: false, channels: [], silent: true, reason: 'digest_only' };
   }
 
   const channels: NotificationChannel[] = [...inApp];

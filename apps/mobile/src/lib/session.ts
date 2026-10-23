@@ -1,3 +1,4 @@
+import { timezoneToAdopt } from '@remindora/core';
 import type { AuthTokensDTO, DeviceInfoInput, UserDTO } from '@remindora/types';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
@@ -65,4 +66,18 @@ export function refreshSession(): Promise<boolean> {
     }
   })();
   return inflight;
+}
+
+/** Moves a UTC (default) account to the phone's time zone so "6pm" reminds at 6pm local time. */
+export async function adoptDeviceTimezone() {
+  const user = useSession.getState().user;
+  const zone = timezoneToAdopt(user?.timezone, Intl.DateTimeFormat().resolvedOptions().timeZone);
+  if (!zone) return;
+  try {
+    const { api } = await import('./api');
+    const updated = await api<UserDTO>('/auth/me', { method: 'PATCH', body: { timezone: zone } });
+    useSession.setState({ user: updated });
+  } catch {
+    /* retried on next launch */
+  }
 }

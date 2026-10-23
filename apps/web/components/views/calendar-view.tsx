@@ -1,6 +1,6 @@
 'use client';
 import { DndContext, DragOverlay, PointerSensor, pointerWithin, rectIntersection, useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent } from '@dnd-kit/core';
-import { Button, cn, priorityMeta, Segmented, Spinner } from '@remindora/ui';
+import { Button, cn, priorityMeta, Segmented, Spinner, withAlpha } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Lock, Repeat } from 'lucide-react';
@@ -70,7 +70,7 @@ function blockTimes(t: TaskDTO, tz: string) {
 function TaskChip({ task, tz, style, compact, ghost }: { task: TaskDTO; tz: string; style?: React.CSSProperties; compact?: boolean; ghost?: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: ghost ? `ghost-${task.id}-${style?.top}` : task.id, disabled: ghost || !!task.completedAt });
   const select = useUi((s) => s.selectTask);
-  const color = priorityMeta[task.priority as keyof typeof priorityMeta].color;
+  const color = priorityMeta[task.priority as keyof typeof priorityMeta].cssVar;
   const t = blockTimes(task, tz);
   return (
     <button
@@ -79,7 +79,7 @@ function TaskChip({ task, tz, style, compact, ghost }: { task: TaskDTO; tz: stri
       {...(ghost ? {} : attributes)}
       {...(ghost ? {} : listeners)}
       onClick={() => select(task.id)}
-      style={{ ...style, borderColor: `${color}66`, background: ghost ? 'transparent' : `linear-gradient(135deg, ${color}26, ${color}10)` }}
+      style={{ ...style, borderColor: withAlpha(color, 0.4), background: ghost ? 'transparent' : `linear-gradient(135deg, ${withAlpha(color, 0.15)}, ${withAlpha(color, 0.06)})` }}
       className={cn(
         'block w-full overflow-hidden rounded-lg border px-1.5 text-left text-[11.5px] leading-tight text-ink transition-opacity',
         compact ? 'h-5 truncate' : 'py-0.5 [&>span:first-child]:line-clamp-2',

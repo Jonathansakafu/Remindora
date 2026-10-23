@@ -72,7 +72,8 @@ test('schedules a task by dragging it onto the calendar', async ({ page }) => {
   const placed = target.getByRole('button', { name: 'Draft quarterly plan at 10:00' });
   await expect(placed).toBeVisible();
   await placed.click();
-  await expect(page.getByLabel('Due date', { exact: true })).toHaveValue(/T10:00$/);
+  // Time-blocking is available to everyone: the drop creates a 1-hour block, so it's due at the block's end.
+  await expect(page.getByLabel('Due date', { exact: true })).toHaveValue(/T11:00$/);
 });
 
 test('acknowledging a reminder on one device dismisses it on the other', async ({ browser }) => {

@@ -114,10 +114,6 @@ describe('workspace permissions', () => {
     for (const [email, role] of [[memberEmail, 'MEMBER'], [viewerEmail, 'VIEWER']] as const) {
       await h.http().post(`/workspaces/${ws.body.id}/invites`).set(auth(owner.accessToken)).send({ email, role }).expect(201);
     }
-    // Free plan: owner + 2 members max (members.max = 2 counts pending invites). Upgrade to keep inviting.
-    const limited = await h.http().post(`/workspaces/${ws.body.id}/invites`).set(auth(owner.accessToken)).send({ email: uniqueEmail('third'), role: 'MEMBER' });
-    expect(limited.status).toBe(402);
-    expect(limited.body.error).toMatchObject({ code: 'plan_limit', details: { key: 'members.max', limit: 2 } });
 
     const notifs = await h.prisma.notification.findMany({ where: { kind: 'INVITE', userId: { in: [member.user.id, viewer.user.id] } } });
     for (const n of notifs) {
@@ -154,36 +150,32 @@ describe('workspace permissions', () => {
   });
 });
 
-describe('premium entitlements (server-enforced)', () => {
-  it('limits lists on Free and lifts them on Premium', async () => {
-    const free = await signIn(h, uniqueEmail('free'));
-    for (let i = 0; i < 9; i++) await h.http().post('/projects').set(auth(free.accessToken)).send({ name: `List ${i}` }).expect(201);
-    const tenth = await h.http().post('/projects').set(auth(free.accessToken)).send({ name: 'List 10' });
-    expect(tenth.status).toBe(402);
-    expect(tenth.body.error.details).toEqual({ key: 'lists.max', limit: 9 });
-    await premium(free.accessToken);
-    await h.http().post('/projects').set(auth(free.accessToken)).send({ name: 'List 10' }).expect(201);
+describe('entitlements (everything free, server-enforced)', () => {
+  it('free accounts get every feature and generous limits', async () => {
+    const u = await signIn(h, uniqueEmail('free'));
+    for (let i = 0; i < 12; i++) await h.http().post('/projects').set(auth(u.accessToken)).send({ name: `List ${i}` }).expect(201);
+    const t = await h.http().post('/tasks').set(auth(u.accessToken)).send({ title: 'Block me' }).expect(201);
+    await h.http().patch(`/tasks/${t.body.id}`).set(auth(u.accessToken)).send({ durationMinutes: 30 }).expect(200);
+    await h.http().post('/templates').set(auth(u.accessToken)).send({ kind: 'TASK', name: 'x', payload: {} }).expect(201);
+    const ent = await h.http().get('/me/entitlements').set(auth(u.accessToken)).expect(200);
+    expect(ent.body).toMatchObject({ plan: 'FREE', limits: { 'lists.max': 999, 'remindersPerTask.max': 10 } });
+    expect(Object.values(ent.body.features).every(Boolean)).toBe(true);
   });
 
-  it('gates premium features and adjusts limits at runtime without an app update', async () => {
-    const u = await signIn(h, uniqueEmail('gates'));
-    const t = await h.http().post('/tasks').set(auth(u.accessToken)).send({ title: 'Block me' }).expect(201);
-    const dur = await h.http().patch(`/tasks/${t.body.id}`).set(auth(u.accessToken)).send({ durationMinutes: 30 });
-    expect(dur.status).toBe(402);
-    expect(dur.body.error).toMatchObject({ code: 'plan_feature', details: { feature: 'task.duration' } });
-    await h.http().post('/templates').set(auth(u.accessToken)).send({ kind: 'TASK', name: 'x', payload: {} }).expect(402);
-
-    const ent = await h.http().get('/me/entitlements').set(auth(u.accessToken)).expect(200);
-    expect(ent.body).toMatchObject({ plan: 'FREE', limits: { 'remindersPerTask.max': 2 } });
-
-    // An operator raises the Free reminder limit in the database; clients pick it up on next fetch.
-    const row = await h.prisma.entitlement.findFirst({ where: { plan: 'FREE', key: 'remindersPerTask.max', userId: null } });
-    if (row) await h.prisma.entitlement.update({ where: { id: row.id }, data: { limit: 3 } });
-    else await h.prisma.entitlement.create({ data: { plan: 'FREE', key: 'remindersPerTask.max', limit: 3 } });
+  it('operators can still adjust limits at runtime without an app update', async () => {
+    const u = await signIn(h, uniqueEmail('runtime'));
     const { EntitlementsService } = await import('../src/common/entitlements.service');
+    const row = await h.prisma.entitlement.create({ data: { userId: u.user.id, key: 'lists.max', limit: 1 } });
     h.app.get(EntitlementsService).invalidate();
-    const after = await h.http().get('/me/entitlements').set(auth(u.accessToken)).expect(200);
-    expect(after.body.limits['remindersPerTask.max']).toBe(3);
+    try {
+      await h.http().post('/projects').set(auth(u.accessToken)).send({ name: 'One' }).expect(201);
+      const second = await h.http().post('/projects').set(auth(u.accessToken)).send({ name: 'Two' });
+      expect(second.status).toBe(402);
+      expect(second.body.error).toMatchObject({ code: 'plan_limit', details: { key: 'lists.max', limit: 1 } });
+    } finally {
+      await h.prisma.entitlement.delete({ where: { id: row.id } });
+      h.app.get(EntitlementsService).invalidate();
+    }
   });
 });
 
@@ -222,13 +214,11 @@ describe('calendar scheduling', () => {
     for (const g of ghosts) expect(DateTime.fromISO(g.at).setZone('Europe/Berlin').toFormat('ccc HH:mm')).toBe(day.toFormat('ccc') + ' 17:00');
   });
 
-  it('free users get basic calendar views; premium views are gated', async () => {
+  it('free users get every calendar view', async () => {
     const u = await signIn(h, uniqueEmail('cal-free'));
     const from = new Date().toISOString();
     const to = new Date(Date.now() + 7 * 86_400_000).toISOString();
-    await h.http().get('/calendar').query({ from, to, view: 'month' }).set(auth(u.accessToken)).expect(200);
-    const year = await h.http().get('/calendar').query({ from, to, view: 'year' }).set(auth(u.accessToken));
-    expect(year.status).toBe(402);
+    for (const view of ['month', 'year']) await h.http().get('/calendar').query({ from, to, view }).set(auth(u.accessToken)).expect(200);
   });
 });
 

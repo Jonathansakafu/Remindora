@@ -66,10 +66,10 @@ export function OrbitSummary({ tall }: { tall?: boolean }) {
   const progress = completedToday + open ? completedToday / (completedToday + open) : 0;
   const habitsDone = habits.filter((h) => h.checkIns.includes(todayKey!)).length;
   const metrics: OrbitMetric[] = [
-    { label: 'Today', display: `${open} open`, value: Math.min(1, open / 10), color: '#60E9FF', href: '/app/today' },
-    { label: 'Focus', display: `${focus?.todayMinutes ?? 0} min`, value: Math.min(1, (focus?.todayMinutes ?? 0) / 120), color: '#7CF3B0', href: '/app/focus' },
-    { label: 'Habits', display: `${habitsDone}/${habits.length}`, value: habits.length ? habitsDone / habits.length : 0, color: '#FFBC5C', href: '/app/habits' },
-    { label: 'Progress', display: `${Math.round(progress * 100)}% done`, value: progress, color: '#A58CFF', href: '/app/analytics' },
+    { label: 'Today', display: `${open} open`, value: Math.min(1, open / 10), color: 'var(--color-cyan)', href: '/app/today' },
+    { label: 'Focus', display: `${focus?.todayMinutes ?? 0} min`, value: Math.min(1, (focus?.todayMinutes ?? 0) / 120), color: 'var(--color-success)', href: '/app/focus' },
+    { label: 'Habits', display: `${habitsDone}/${habits.length}`, value: habits.length ? habitsDone / habits.length : 0, color: 'var(--color-amber)', href: '/app/habits' },
+    { label: 'Progress', display: `${Math.round(progress * 100)}% done`, value: progress, color: 'var(--color-violet)', href: '/app/analytics' },
   ];
   const use3d = show3d && !reduced && webgl;
   const labelRefs = useMemo(() => [0, 1, 2, 3].map(() => createRef<HTMLButtonElement>()), []);

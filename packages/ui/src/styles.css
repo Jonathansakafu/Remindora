@@ -44,21 +44,27 @@
 
 /* Daybreak: optional light theme (Settings → Appearance). */
 [data-theme='daybreak'] {
-  --color-bg: #eef3fb;
-  --color-bg-elevated: #f7f9fe;
-  --color-surface: #ffffff;
-  --color-surface-high: #e7eefa;
-  --color-line: rgb(17 28 62 / 0.1);
-  --color-line-strong: rgb(17 28 62 / 0.2);
-  --color-ink: #0b1330;
-  --color-ink-muted: #3a4c72;
-  --color-ink-faint: #5a6b8e;
-  --color-cyan: #0b7f99;
-  --color-violet: #5b43d6;
-  --color-amber: #a05e00;
-  --color-danger: #c42a4b;
-  --color-success: #177a4c;
+  /* Soft blue-grey, not paper white: easier on the eyes and lets panels stand out. */
+  --color-bg: #dfe6f0;
+  --color-bg-elevated: #e8edf5;
+  --color-surface: #f3f6fa;
+  --color-surface-high: #d6dfeb;
+  --color-line: rgb(17 28 62 / 0.16);
+  --color-line-strong: rgb(17 28 62 / 0.28);
+  --color-ink: #0a1128;
+  --color-ink-muted: #26375a;
+  --color-ink-faint: #42547a;
+  --color-cyan: #0a6a80;
+  --color-violet: #4b33c4;
+  --color-amber: #8a4f00;
+  --color-danger: #b0213f;
+  --color-success: #12663f;
   --color-on-accent: #ffffff;
+  --color-p-critical: #b0213f;
+  --color-p-high: #8a4f00;
+  --color-p-medium: #0a6a80;
+  --color-p-low: #4b33c4;
+  --color-p-none: #42547a;
 }
 
 @layer base {
@@ -70,6 +76,16 @@
   }
   [data-theme='daybreak'] {
     color-scheme: light;
+    /* Dark text on light needs normal (not thin "antialiased") rendering and a touch more weight. */
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+  }
+  [data-theme='daybreak'] body {
+    font-weight: 450;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgb(75 51 196 / 0.07), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgb(10 106 128 / 0.06), transparent 60%),
+      var(--color-bg);
   }
   body {
     min-height: 100dvh;
@@ -132,3 +148,10 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Light theme: translucent-white fills from the dark design become translucent ink. */
+[data-theme='daybreak'] .bg-white\/5 { background-color: rgb(17 28 62 / 0.06); }
+[data-theme='daybreak'] .bg-white\/8 { background-color: rgb(17 28 62 / 0.08); }
+[data-theme='daybreak'] .bg-white\/10 { background-color: rgb(17 28 62 / 0.1); }
+[data-theme='daybreak'] .bg-white\/20 { background-color: rgb(17 28 62 / 0.14); }
+[data-theme='daybreak'] .hover\:bg-white\/5:hover { background-color: rgb(17 28 62 / 0.06); }

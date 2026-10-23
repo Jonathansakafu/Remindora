@@ -176,7 +176,7 @@ describe('priority notification engine', () => {
     phoneSocket.disconnect();
   });
 
-  it('honours user intervals, maximum re-alert count, and low-priority silence', async () => {
+  it('honours user intervals and maximum re-alert count; low priority alerts once', async () => {
     const { desktop, desktopSocket, phoneSocket } = await twoDevices();
     await h.http().patch('/notifications/preferences').set(auth(desktop.accessToken)).send({ highRepeatMinutes: 45, maxRealerts: 1 }).expect(200);
     const { reminderId } = await dueTask(desktop.accessToken, 'HIGH');
@@ -189,7 +189,7 @@ describe('priority notification engine', () => {
 
     const low = await h.http().post('/tasks').set(auth(desktop.accessToken)).send({ title: 'Low thing', priority: 'LOW', dueAt: new Date().toISOString(), reminders: [{ offsetMinutes: 0 }] }).expect(201);
     const c = await fireReminder(deps, { reminderId: low.body.reminders[0].id, fireAt: new Date().toISOString() }, scheduler);
-    expect(c).toMatchObject({ status: 'fired', channels: ['IN_APP'], nextFireAt: null });
+    expect(c).toMatchObject({ status: 'fired', channels: ['IN_APP', 'PUSH', 'DESKTOP', 'WEB_PUSH'], nextFireAt: null });
     desktopSocket.disconnect();
     phoneSocket.disconnect();
   });

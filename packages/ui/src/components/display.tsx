@@ -2,7 +2,7 @@
 import { Check } from 'lucide-react';
 import { useEffect, useId, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../cn';
-import { priorityMeta, type PriorityKey } from '../tokens';
+import { priorityMeta, withAlpha, type PriorityKey } from '../tokens';
 
 export function GlassPanel({ className, strong, glow, ...props }: React.ComponentProps<'div'> & { strong?: boolean; glow?: boolean }) {
   return <div className={cn(strong ? 'glass-strong' : 'glass', 'rounded-[var(--radius-glass)]', glow && 'luminous-border', className)} {...props} />;
@@ -24,7 +24,7 @@ export function PriorityFlag({ priority, showLabel, className }: { priority: Pri
   const m = priorityMeta[priority];
   if (priority === 'NONE' && !showLabel) return null;
   return (
-    <span className={cn('inline-flex items-center gap-1 text-[11px] font-semibold', className)} style={{ color: m.color }}>
+    <span className={cn('inline-flex items-center gap-1 text-[11px] font-semibold', className)} style={{ color: m.cssVar }}>
       <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
         <path d="M1 1v10M1 1h7l-1.5 2.5L8 6H1" fill="currentColor" fillOpacity={0.25} stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
@@ -53,7 +53,7 @@ export function usePrefersReducedMotion(): boolean {
 export function TaskCheck({ checked, onChange, priority = 'NONE', label, disabled }: { checked: boolean; onChange: (next: boolean) => void; priority?: PriorityKey; label: string; disabled?: boolean }) {
   const reduced = usePrefersReducedMotion();
   const [burst, setBurst] = useState(0);
-  const color = priorityMeta[priority].color;
+  const color = priorityMeta[priority].cssVar;
   return (
     <button
       type="button"
@@ -71,7 +71,7 @@ export function TaskCheck({ checked, onChange, priority = 'NONE', label, disable
         checked ? 'scale-100 border-transparent' : 'hover:scale-110',
         !reduced && checked && 'animate-[rise_0.3s_ease-out]',
       )}
-      style={{ borderColor: checked ? 'transparent' : color, background: checked ? color : `${color}14` }}
+      style={{ borderColor: checked ? 'transparent' : color, background: checked ? color : withAlpha(color, 0.08) }}
     >
       {checked && <Check size={13} strokeWidth={3} className={cn('text-on-accent', !reduced && '[stroke-dasharray:24] [animation:draw_0.25s_ease-out]')} />}
       {burst > 0 && !reduced && (
@@ -133,7 +133,7 @@ export function EmptyState({ icon, title, body, action }: { icon?: ReactNode; ti
   );
 }
 
-export function ProgressRing({ value, size = 44, stroke = 4, color = '#60E9FF', label }: { value: number; size?: number; stroke?: number; color?: string; label?: ReactNode }) {
+export function ProgressRing({ value, size = 44, stroke = 4, color = 'var(--color-cyan)', label }: { value: number; size?: number; stroke?: number; color?: string; label?: ReactNode }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value));
@@ -141,7 +141,7 @@ export function ProgressRing({ value, size = 44, stroke = 4, color = '#60E9FF', 
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }} role="img" aria-label={`${Math.round(v * 100)}%`}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} stroke="currentColor" className="text-line" strokeWidth={stroke} fill="none" />
-        <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v)} style={{ transition: 'stroke-dashoffset .5s ease', filter: `drop-shadow(0 0 4px ${color}66)` }} />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v)} style={{ transition: 'stroke-dashoffset .5s ease', filter: `drop-shadow(0 0 4px ${withAlpha(color, 0.4)})` }} />
       </svg>
       {label !== undefined && <span className="absolute text-[11px] font-semibold text-ink">{label}</span>}
     </div>
@@ -175,7 +175,7 @@ export function Heatmap({ days, color = '#60E9FF', label }: { days: Array<{ date
 }
 
 /** Minimal accessible bar chart; values are also exposed as a table for screen readers. */
-export function BarChart({ data, height = 140, color = '#60E9FF', secondary, label, format = (v: number) => String(v) }: { data: Array<{ label: string; value: number; value2?: number }>; height?: number; color?: string; secondary?: string; label: string; format?: (v: number) => string }) {
+export function BarChart({ data, height = 140, color = 'var(--color-cyan)', secondary, label, format = (v: number) => String(v) }: { data: Array<{ label: string; value: number; value2?: number }>; height?: number; color?: string; secondary?: string; label: string; format?: (v: number) => string }) {
   const max = Math.max(1, ...data.map((d) => Math.max(d.value, d.value2 ?? 0)));
   const id = useId();
   return (
@@ -184,8 +184,8 @@ export function BarChart({ data, height = 140, color = '#60E9FF', secondary, lab
       <div className="flex items-end gap-1" style={{ height }} aria-hidden>
         {data.map((d, i) => (
           <div key={i} className="group relative flex flex-1 items-end justify-center gap-[2px]" style={{ height: '100%' }}>
-            <div className="w-full max-w-4 rounded-t-[4px] transition-[height] duration-500" style={{ height: `${(d.value / max) * 100}%`, background: `linear-gradient(180deg, ${color}, ${color}55)`, minHeight: d.value ? 3 : 0 }} />
-            {secondary && d.value2 !== undefined && <div className="w-full max-w-4 rounded-t-[4px]" style={{ height: `${(d.value2 / max) * 100}%`, background: `${secondary}88`, minHeight: d.value2 ? 3 : 0 }} />}
+            <div className="w-full max-w-4 rounded-t-[4px] transition-[height] duration-500" style={{ height: `${(d.value / max) * 100}%`, background: `linear-gradient(180deg, ${color}, ${withAlpha(color, 0.33)})`, minHeight: d.value ? 3 : 0 }} />
+            {secondary && d.value2 !== undefined && <div className="w-full max-w-4 rounded-t-[4px]" style={{ height: `${(d.value2 / max) * 100}%`, background: withAlpha(secondary, 0.53), minHeight: d.value2 ? 3 : 0 }} />}
             <span className="pointer-events-none absolute -top-6 hidden whitespace-nowrap rounded-md bg-surface px-1.5 py-0.5 text-[10px] text-ink group-hover:block">{d.label}: {format(d.value)}</span>
           </div>
         ))}

@@ -14,7 +14,7 @@ import { flushOutbox, watchConnectivity } from '../src/lib/offline';
 import { handleResponse, registerForPush, setupChannelsAndActions } from '../src/lib/push';
 import { refetchTasks } from '../src/lib/queries';
 import { connectRealtime, disconnectRealtime } from '../src/lib/realtime';
-import { refreshSession, useSession } from '../src/lib/session';
+import { adoptDeviceTimezone, refreshSession, useSession } from '../src/lib/session';
 import { colors } from '../src/lib/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -76,6 +76,7 @@ export default function RootLayout() {
     if (status !== 'signed_in') return;
     connectRealtime(queryClient);
     void registerForPush().catch(() => undefined);
+    void adoptDeviceTimezone();
     return () => disconnectRealtime();
   }, [status, sessionId]);
 

@@ -44,7 +44,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           {signedIn ? (
-            <Link href="/app/today" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:bg-[#8af0ff]">
+            <Link href="/app/today" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:brightness-110">
               Open Remindora
             </Link>
           ) : (
@@ -52,7 +52,7 @@ export function SiteHeader() {
               <Link href="/login" className="inline-flex h-10 items-center rounded-xl px-4 text-sm font-medium text-ink-muted hover:text-ink">
                 Sign in
               </Link>
-              <Link href="/register" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:bg-[#8af0ff]">
+              <Link href="/register" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:brightness-110">
                 Get started free
               </Link>
             </>

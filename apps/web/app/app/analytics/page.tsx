@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
           </div>
           <GlassPanel className="p-4">
             <div className="mb-3 flex items-center gap-4 text-sm"><h2 className="font-semibold">Completed vs created</h2><span className="flex items-center gap-1.5 text-xs text-ink-faint"><span className="h-2 w-2 rounded-sm bg-cyan" />completed</span><span className="flex items-center gap-1.5 text-xs text-ink-faint"><span className="h-2 w-2 rounded-sm bg-violet" />created</span></div>
-            <BarChart label="Tasks completed and created per day" data={data.daily.map((d) => ({ label: DateTime.fromISO(d.date).toFormat(Number(days) > 30 ? 'd/L' : 'd'), value: d.completed, value2: d.created }))} secondary="#A58CFF" height={150} />
+            <BarChart label="Tasks completed and created per day" data={data.daily.map((d) => ({ label: DateTime.fromISO(d.date).toFormat(Number(days) > 30 ? 'd/L' : 'd'), value: d.completed, value2: d.created }))} secondary="var(--color-violet)" height={150} />
           </GlassPanel>
           <div className="grid gap-4 md:grid-cols-2">
             <GlassPanel className="p-4">
@@ -58,8 +58,8 @@ export default function AnalyticsPage() {
                   const max = Math.max(1, ...Object.values(data.byPriority));
                   return (
                     <li key={p} className="flex items-center gap-3 text-sm">
-                      <span className="w-16 text-xs" style={{ color: priorityMeta[p].color }}>{priorityMeta[p].label}</span>
-                      <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/5"><span className="block h-full rounded-full" style={{ width: `${(v / max) * 100}%`, background: priorityMeta[p].color }} /></span>
+                      <span className="w-16 text-xs" style={{ color: priorityMeta[p].cssVar }}>{priorityMeta[p].label}</span>
+                      <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/5"><span className="block h-full rounded-full" style={{ width: `${(v / max) * 100}%`, background: priorityMeta[p].cssVar }} /></span>
                       <span className="w-8 text-right tabular-nums text-ink-muted">{v}</span>
                     </li>
                   );
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
           </div>
           <GlassPanel className="p-4">
             <h2 className="mb-3 text-sm font-semibold">Focus minutes</h2>
-            <BarChart label="Focus minutes per day" data={data.daily.map((d) => ({ label: DateTime.fromISO(d.date).toFormat('d'), value: d.focusMinutes }))} color="#7CF3B0" height={100} format={(v) => `${v} min`} />
+            <BarChart label="Focus minutes per day" data={data.daily.map((d) => ({ label: DateTime.fromISO(d.date).toFormat('d'), value: d.focusMinutes }))} color="var(--color-success)" height={100} format={(v) => `${v} min`} />
           </GlassPanel>
           {data.premium ? (
             <GlassPanel glow className="grid gap-4 p-4 sm:grid-cols-4">
