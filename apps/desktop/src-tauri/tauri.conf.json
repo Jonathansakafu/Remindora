@@ -71,7 +71,7 @@
     },
     "updater": {
       "endpoints": [
-        "https://releases.remindora.app/desktop/{{target}}/{{arch}}/{{current_version}}"
+        "https://github.com/Jonathansakafu/Remindora/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY0OTgwQjZGMTdEODUyMkUKUldRdVV0Z1hid3VZOU1xa3ZVcitOdnVQeHhma1lZelM1aEZTNjF3TTF4LzZLK1JWQjdFTkI5QU4K"
     }

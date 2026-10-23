@@ -1,0 +1,59 @@
+name: Desktop release
+
+# Builds signed-updater desktop bundles and attaches them (plus latest.json for the
+# in-app updater) to the GitHub release for the tag.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to attach installers to (e.g. v0.1.0)
+        required: true
+
+env:
+  NODE_VERSION: 24
+  NEXT_PUBLIC_API_URL: https://api-production-1921.up.railway.app
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, args: "--target aarch64-apple-darwin", rust_targets: aarch64-apple-darwin }
+          - { os: macos-latest, args: "--target x86_64-apple-darwin", rust_targets: x86_64-apple-darwin }
+          - { os: windows-latest, args: "", rust_targets: "" }
+          - { os: ubuntu-22.04, args: "", rust_targets: "" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "${{ matrix.rust_targets }}" }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: apps/desktop/src-tauri }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - name: Linux system libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Use bash for npm scripts (VAR=value prefixes)
+        if: runner.os == 'Windows'
+        run: npm config set script-shell "C:\\Program Files\\Git\\bin\\bash.exe"
+      - run: npm ci
+        env: { REDISMS_DISABLE_POSTINSTALL: 1 }
+      - run: npx turbo run build --filter="./packages/*"
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: Remindora ${{ inputs.tag || github.ref_name }}
+          releaseDraft: false
+          args: ${{ matrix.args }}
