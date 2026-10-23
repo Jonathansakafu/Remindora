@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api } from './api';
 import { API_URL } from './config';
 import { flushOutbox, useSync } from './offline';
+import { useAlarm } from './alarm';
 import { dismissNative, nativeNotify } from './platform';
 import { keys, patchTaskCaches, removeTaskFromCaches, scheduleTaskRefetch } from './queries';
 import { refreshSession, useSession } from './session';
@@ -74,16 +75,12 @@ export function connectRealtime(qc: QueryClient, handlers: { onOpenTask: (id: st
       void nativeNotify({ title: notification.title, body: notification.body, tag: notification.reminderId ?? notification.id, urgent: notification.priority === 'CRITICAL', onClick: open });
     }
     if (notification.kind === 'REMINDER' && alert?.sound !== false) {
-      toast(notification.title, {
-        description: notification.body,
-        duration: notification.priority === 'CRITICAL' ? Infinity : 8000,
-        action: notification.taskId ? { label: 'Complete', onClick: () => api(`/notifications/${notification.id}/action`, { body: { action: 'complete' } }) } : undefined,
-        cancel: { label: 'Snooze 10m', onClick: () => api(`/notifications/${notification.id}/action`, { body: { action: 'snooze', snoozeMinutes: 10 } }) },
-      });
+      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body });
     }
   });
   s.on('notification.resolved', ({ notificationId, reminderId }) => {
     dismissNative(reminderId ?? notificationId);
+    useAlarm.getState().dismiss(notificationId);
     qc.setQueryData<{ items: NotificationDTO[]; unread: number }>(keys.notifications, (prev) =>
       prev ? { ...prev, items: prev.items.map((n) => (n.id === notificationId ? { ...n, acknowledgedAt: new Date().toISOString(), readAt: n.readAt ?? new Date().toISOString() } : n)) } : prev,
     );

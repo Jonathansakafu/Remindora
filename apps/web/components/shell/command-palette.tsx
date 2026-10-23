@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useProjects } from '@/lib/queries';
 import { useUi } from '@/lib/ui-store';
-import { primaryNav, secondaryNav } from './nav';
+import { primaryNav, secondaryNav, simpleNav } from './nav';
 import * as Dialog from '@radix-ui/react-dialog';
 
 /** ⌘K command palette: navigate, search tasks, run actions. */
@@ -78,7 +78,7 @@ export function CommandPalette() {
                 </Command.Item>
               </Command.Group>
               <Command.Group heading="Go to" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-ink-faint">
-                {[...primaryNav, ...secondaryNav].map((n) => (
+                {[...simpleNav, ...primaryNav, ...secondaryNav].map((n) => (
                   <Command.Item key={n.href} onSelect={() => go(n.href)} className={item}>
                     <n.icon size={16} /> {n.label}
                   </Command.Item>

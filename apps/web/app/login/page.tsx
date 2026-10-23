@@ -29,7 +29,7 @@ function LoginInner() {
   const [providers, setProviders] = useState<string[]>([]);
 
   useEffect(() => {
-    if (status === 'signed_in') router.replace('/app/today');
+    if (status === 'signed_in') router.replace('/app/reminders');
   }, [status, router]);
   useEffect(() => {
     api<{ oauth: string[] }>('/auth/providers', { auth: false }).then((p) => setProviders(p.oauth)).catch(() => undefined);

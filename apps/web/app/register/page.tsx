@@ -24,7 +24,7 @@ export default function RegisterPage() {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
 
   useEffect(() => {
-    if (status === 'signed_in') router.replace('/app/today');
+    if (status === 'signed_in') router.replace('/app/reminders');
   }, [status, router]);
 
   const back = useCallback((msg?: string) => {

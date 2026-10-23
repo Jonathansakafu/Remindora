@@ -21,6 +21,7 @@ const IMPORTANCE = {
 export async function setupChannelsAndActions() {
   if (Platform.OS !== 'android') return;
   for (const c of Object.values(ANDROID_CHANNELS)) {
+    if (c.id === ANDROID_CHANNELS.alarm.id) continue;
     await Notifications.setNotificationChannelAsync(c.id, {
       name: c.name,
       importance: IMPORTANCE[c.importance],
@@ -31,6 +32,19 @@ export async function setupChannelsAndActions() {
       lightColor: '#60E9FF',
     });
   }
+  // Reminders ring here: alarm sound on the alarm volume stream, long vibration, shown on the lock screen.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNELS.alarm.id, {
+    name: ANDROID_CHANNELS.alarm.name,
+    description: 'Rings like an alarm clock when a reminder is due',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: 'remindora_alarm.wav',
+    audioAttributes: { usage: Notifications.AndroidAudioUsage.ALARM, contentType: Notifications.AndroidAudioContentType.SONIFICATION },
+    bypassDnd: true,
+    enableVibrate: true,
+    vibrationPattern: [0, 800, 500, 800, 500, 800],
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    lightColor: '#60E9FF',
+  });
   await Notifications.setNotificationCategoryAsync(REMINDER_CATEGORY, [
     { identifier: 'complete', buttonTitle: 'Complete', options: { opensAppToForeground: false } },
     { identifier: 'snooze', buttonTitle: 'Snooze 10m', options: { opensAppToForeground: false } },
@@ -41,6 +55,8 @@ export async function setupChannelsAndActions() {
 Notifications.setNotificationHandler({
   handleNotification: async (n) => {
     const data = n.request.content.data as { priority?: string; type?: string };
+    // App open: reminders ring on the full-screen alarm instead of a banner.
+    if (data.type === 'reminder') return { shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true };
     const loud = data.priority === 'CRITICAL' || data.priority === 'HIGH';
     return { shouldShowBanner: true, shouldShowList: true, shouldPlaySound: loud, shouldSetBadge: true };
   },

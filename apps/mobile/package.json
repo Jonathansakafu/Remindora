@@ -14,6 +14,7 @@
   "dependencies": {
     "@noble/hashes": "^1.8.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-community/netinfo": "12.0.1",
     "@remindora/core": "0.1.0",
     "@remindora/notifications": "0.1.0",
@@ -24,6 +25,7 @@
     "@tanstack/react-query-persist-client": "^5.104.5",
     "expo": "~58.0.17",
     "expo-application": "~58.1.2",
+    "expo-audio": "~58.0.10",
     "expo-blur": "~58.0.5",
     "expo-build-properties": "~58.0.11",
     "expo-camera": "~58.0.12",

@@ -7,6 +7,8 @@ import type { Priority } from '@remindora/types';
  * it if the user granted notification-policy access.
  */
 export const ANDROID_CHANNELS = {
+  /** Every task reminder rings here like an alarm clock (own sound, max importance, bypasses DND). */
+  alarm: { id: 'remindora-alarm', name: 'Alarms', importance: 'MAX', bypassDnd: true, vibrate: true },
   critical: { id: 'remindora-critical', name: 'Critical reminders', importance: 'MAX', bypassDnd: true, vibrate: true },
   high: { id: 'remindora-high', name: 'High priority reminders', importance: 'HIGH', bypassDnd: false, vibrate: true },
   default: { id: 'remindora-default', name: 'Reminders', importance: 'DEFAULT', bypassDnd: false, vibrate: false },
@@ -24,6 +26,14 @@ export function androidChannelFor(priority: Priority): (typeof ANDROID_CHANNELS)
     default:
       return ANDROID_CHANNELS.quiet;
   }
+}
+
+/** Bundled Android raw resource (apps/mobile/assets/sounds/remindora_alarm.wav). */
+export const ALARM_SOUND = 'remindora_alarm';
+
+/** Reminders ring as alarms; everything else (digests, invites, approvals) follows priority. */
+export function androidChannelForNotification(kind: string, priority: Priority) {
+  return kind === 'REMINDER' ? ANDROID_CHANNELS.alarm : androidChannelFor(priority);
 }
 
 /** Notification category id registered on devices, carrying the one-tap actions. */

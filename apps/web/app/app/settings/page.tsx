@@ -3,7 +3,9 @@ import { Button, Input, Kbd, Segmented, Select, Switch } from '@remindora/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AlarmClock } from 'lucide-react';
 import { DownloadList } from '@/components/download-list';
+import { useAlarm } from '@/lib/alarm';
 import { Section, SettingRow } from '@/components/settings/section';
 import { api } from '@/lib/api';
 import { APP_VERSION } from '@/lib/config';
@@ -94,6 +96,14 @@ export default function ProfileSettings() {
             }}
           >
             Set or change password
+          </Button>
+        </SettingRow>
+      </Section>
+
+      <Section title="Alarm" description="Reminders ring like an alarm clock until you press Stop or Snooze.">
+        <SettingRow label="Alarm sound" hint="Play the alarm now to check your volume. Your browser may ask once to allow sound.">
+          <Button size="sm" onClick={() => useAlarm.getState().ring({ notificationId: `test-${Date.now()}`, taskId: null, title: 'Test alarm', body: 'This is how your reminders will ring.', test: true })}>
+            <AlarmClock size={14} /> Test alarm
           </Button>
         </SettingRow>
       </Section>

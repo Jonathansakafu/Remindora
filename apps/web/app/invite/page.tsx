@@ -33,7 +33,7 @@ function InviteInner() {
           setBusy(true);
           try {
             await api('/invites/accept', { body: { token } });
-            router.replace('/app/today');
+            router.replace('/app/reminders');
           } catch (e) {
             setError(e instanceof ApiError ? e.message : 'Couldn’t accept this invite.');
           } finally {

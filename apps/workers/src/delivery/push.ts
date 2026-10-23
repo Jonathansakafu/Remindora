@@ -1,3 +1,4 @@
+import { ALARM_SOUND, ANDROID_CHANNELS } from '@remindora/notifications';
 import type { ServerEnv } from '@remindora/config';
 import { createSign } from 'node:crypto';
 import type pino from 'pino';
@@ -65,7 +66,18 @@ function fcmProvider(env: ServerEnv, log: pino.Logger): PushProviders['fcm'] {
             android: {
               priority: 'HIGH',
               collapse_key: msg.tag,
-              notification: { title: msg.title, body: msg.body, channel_id: msg.channelId, tag: msg.tag, ...(msg.sound ? { default_sound: true } : {}) },
+              notification: {
+                title: msg.title,
+                body: msg.body,
+                channel_id: msg.channelId,
+                tag: msg.tag,
+                // Alarm channel: its own ringing sound, top priority, shown on the lock screen.
+                ...(msg.channelId === ANDROID_CHANNELS.alarm.id
+                  ? { sound: ALARM_SOUND, notification_priority: 'PRIORITY_MAX', visibility: 'PUBLIC', default_vibrate_timings: true }
+                  : msg.sound
+                    ? { default_sound: true }
+                    : {}),
+              },
             },
           };
     const res = await fetch(`https://fcm.googleapis.com/v1/projects/${env.FCM_PROJECT_ID}/messages:send`, {

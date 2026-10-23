@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { NotificationChannels } from '../src/components/notification-channels';
 import { Button, Glass, Screen, SectionLabel } from '../src/components/ui';
+import { useAlarm } from '../src/lib/alarm';
 import { api } from '../src/lib/api';
 import { biometricsAvailable, enrollBiometricReauth, setAppLock, useLock } from '../src/lib/biometric';
 import { openBatterySettings, openChannelSettings, openDndAccessSettings, registerForPush } from '../src/lib/push';
@@ -30,6 +31,7 @@ export default function Settings() {
           <Text style={{ color: colors.text }}>Permission: {perm}</Text>
           <View style={{ gap: 8, marginTop: 10 }}>
             <Button label={perm === 'granted' ? 'Re-register this phone' : 'Enable notifications'} variant="primary" onPress={async () => setPerm(await registerForPush())} />
+            <Button label="⏰  Test alarm sound" onPress={() => useAlarm.getState().ring({ notificationId: `test-${Date.now()}`, taskId: null, title: 'Test alarm', body: 'This is how your reminders will ring.', test: true })} />
             <Button label="Send a test alert" onPress={() => api('/notifications/test', { body: { priority: 'HIGH' } }).then(() => Alert.alert('Sent', 'A test alert is on its way.'))} />
             <Button label="Channel sounds & vibration" onPress={openChannelSettings} />
           </View>

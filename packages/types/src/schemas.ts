@@ -94,7 +94,7 @@ export const bulkTaskInput = z.object({
 });
 
 export const taskQueryInput = z.object({
-  view: z.enum(['inbox', 'today', 'upcoming', 'overdue', 'assigned', 'completed', 'favorites', 'archive', 'trash', 'all']).optional(),
+  view: z.enum(['inbox', 'today', 'upcoming', 'overdue', 'reminders', 'assigned', 'completed', 'favorites', 'archive', 'trash', 'all']).optional(),
   projectId: z.uuid().optional(),
   workspaceId: z.uuid().optional(),
   q: z.string().max(200).optional(),

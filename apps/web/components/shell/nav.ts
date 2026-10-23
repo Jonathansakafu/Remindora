@@ -1,5 +1,16 @@
-import { Info, Archive, BarChart3, Bell, CalendarDays, CalendarRange, CheckCheck, Clock, Flame, Grid2x2, Hourglass, Inbox, Orbit, Search, Star, Sun, Target, Trash2, UserCheck, AlertTriangle } from 'lucide-react';
+import { AlarmClock, LayoutGrid, ListChecks, Settings, Timer, Info, Archive, BarChart3, Bell, CalendarDays, CalendarRange, CheckCheck, Clock, Flame, Grid2x2, Hourglass, Inbox, Orbit, Search, Star, Sun, Target, Trash2, UserCheck, AlertTriangle } from 'lucide-react';
 
+/** The simple app: everything most people need. Everything else lives under "More". */
+export const simpleNav = [
+  { href: '/app/reminders', label: 'Reminders', icon: AlarmClock, slug: 'reminders' },
+  { href: '/app/checklist', label: 'Checklist', icon: ListChecks, slug: 'checklist' },
+  { href: '/app/stopwatch', label: 'Stopwatch', icon: Timer, slug: 'stopwatch' },
+  { href: '/app/more', label: 'More', icon: LayoutGrid, slug: 'more' },
+] as const;
+
+export const settingsNav = { href: '/app/settings', label: 'Settings', icon: Settings, slug: 'settings' } as const;
+
+/** Extra tools shown on the More page. */
 export const primaryNav = [
   { href: '/app/inbox', label: 'Inbox', icon: Inbox, slug: 'inbox' },
   { href: '/app/today', label: 'Today', icon: Sun, slug: 'today' },
@@ -24,10 +35,10 @@ export const secondaryNav = [
 ] as const;
 
 export const mobileTabs = [
-  { href: '/app/today', label: 'Today', icon: Sun },
-  { href: '/app/inbox', label: 'Inbox', icon: Inbox },
-  { href: '/app/calendar', label: 'Calendar', icon: CalendarDays },
-  { href: '/app/focus', label: 'Focus', icon: Clock },
+  { href: '/app/reminders', label: 'Reminders', icon: AlarmClock },
+  { href: '/app/checklist', label: 'Checklist', icon: ListChecks },
+  { href: '/app/stopwatch', label: 'Stopwatch', icon: Timer },
+  { href: '/app/more', label: 'More', icon: LayoutGrid },
 ] as const;
 
 export const utilityIcons = { Search, Bell };

@@ -4,7 +4,7 @@ import { quickAdd, signIn, startSignIn, uniqueEmail } from './helpers';
 test('creates a task with natural-language Quick Add', async ({ page }) => {
   await signIn(page, uniqueEmail('create'));
   await page.goto('/app/inbox');
-  await page.keyboard.press('n');
+  await page.locator('body').press('q');
   await page.getByLabel('Describe the task').fill('Submit report every Friday at 4pm #work !high');
   // Live parsing chips before submitting.
   await expect(page.getByText('Every week on Fri')).toBeVisible();
@@ -29,7 +29,7 @@ test('links a second device with approval and syncs changes in real time', async
   await expect(phone.getByText('Approve on your other device')).toBeVisible();
   await expect(laptop.getByText('Approve new sign-in?')).toBeVisible();
   await laptop.getByRole('button', { name: 'Approve' }).click();
-  await phone.waitForURL('**/app/today');
+  await phone.waitForURL('**/app/reminders');
 
   // Both devices appear in Linked devices.
   await laptop.goto('/app/settings/devices');
@@ -90,17 +90,48 @@ test('acknowledging a reminder on one device dismisses it on the other', async (
   await b.goto('/app/today');
   await quickAdd(a, 'Server alarm in 1 minute !critical');
 
-  // The worker fires the critical reminder at its due time; device B gets the alert (toast with one-tap actions).
-  await expect(b.getByRole('button', { name: 'Snooze 10m' })).toBeVisible({ timeout: 120_000 });
-  await b.getByRole('button', { name: /^Notifications/ }).click();
-  const itemOnB = b.getByRole('dialog').getByRole('listitem').filter({ hasText: 'Server alarm' }).filter({ has: b.getByRole('button', { name: /Complete/ }) });
-  await expect(itemOnB).toBeVisible();
+  // The worker fires the reminder at its due time and both devices ring the full-screen alarm.
+  const alarmA = a.getByRole('alertdialog');
+  const alarmB = b.getByRole('alertdialog');
+  await expect(alarmB.getByRole('heading', { name: /Server alarm/ })).toBeVisible({ timeout: 120_000 });
+  await expect(alarmA).toBeVisible();
 
-  await a.getByRole('button', { name: /^Notifications/ }).click();
-  await a.getByRole('dialog').getByRole('listitem').filter({ hasText: 'Server alarm' }).first().getByRole('button', { name: /Complete/ }).click();
-
-  // Resolved on A → B's copy loses its actions instantly, and the task is done everywhere.
-  await expect(itemOnB).toHaveCount(0);
-  await b.keyboard.press('Escape');
+  // Marking it done on A stops the alarm on B instantly, and the task is done everywhere.
+  await alarmA.getByRole('button', { name: 'Mark as done' }).click();
+  await expect(alarmA).toBeHidden();
+  await expect(alarmB).toBeHidden();
   await expect(b.getByRole('button', { name: /^Server alarm, due/ })).toBeHidden();
+});
+
+test('reminder form sets a reminder that rings as a full-screen alarm', async ({ page }) => {
+  test.setTimeout(240_000);
+  await signIn(page, uniqueEmail('alarm'));
+  await page.locator('body').click();
+  // Two minutes from now in the account's zone (UTC in tests).
+  const due = new Date(Date.now() + 120_000);
+  await page.getByRole('button', { name: 'New reminder' }).first().click();
+  await page.getByLabel('What should I remind you about?').fill('Take medicine');
+  await page.getByLabel('Date').fill(due.toISOString().slice(0, 10));
+  await page.getByLabel('Time').fill(due.toISOString().slice(11, 16));
+  await page.getByRole('button', { name: 'Set reminder' }).click();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Take medicine' })).toBeVisible();
+
+  const alarm = page.getByRole('alertdialog');
+  await expect(alarm).toBeVisible({ timeout: 200_000 });
+  await expect(alarm.getByRole('heading', { name: 'Take medicine' })).toBeVisible();
+  await alarm.getByRole('button', { name: 'Snooze 10m' }).click();
+  await expect(alarm).toBeHidden();
+});
+
+test('daily checklist ticks items for today', async ({ page }) => {
+  await signIn(page, uniqueEmail('checklist'));
+  await page.goto('/app/checklist');
+  for (const item of ['Drink water', 'Exercise']) {
+    await page.getByLabel('New checklist item').fill(item);
+    await page.getByRole('button', { name: 'Add item' }).click();
+    await expect(page.getByRole('checkbox', { name: item })).toBeVisible();
+  }
+  await page.getByRole('checkbox', { name: 'Drink water' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Drink water' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('1 of 2 done')).toBeVisible();
 });

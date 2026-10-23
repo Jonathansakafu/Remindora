@@ -15,7 +15,7 @@ export default function OAuthCallback() {
     if (!code) return void router.replace('/login');
     api<AuthTokensDTO>('/auth/oauth/exchange', { body: { code }, auth: false })
       .then(accept)
-      .then(() => router.replace('/today'))
+      .then(() => router.replace('/reminders'))
       .catch(() => router.replace('/login'));
   }, [code, accept]);
   return (

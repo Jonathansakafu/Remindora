@@ -1,7 +1,7 @@
 {
   "name": "Remindora",
   "short_name": "Remindora",
-  "start_url": "/app/today",
+  "start_url": "/app/reminders",
   "display": "standalone",
   "background_color": "#070D22",
   "theme_color": "#070D22",

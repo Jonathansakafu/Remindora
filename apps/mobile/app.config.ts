@@ -14,7 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'Remindora',
   slug: 'remindora',
   owner: 'jonathansakafu',
-  version: '0.1.3',
+  version: '0.2.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   scheme: 'remindora',
@@ -51,7 +51,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'expo-secure-store',
     ['expo-splash-screen', { backgroundColor: '#070D22', image: './assets/images/splash-icon.png', imageWidth: 120 }],
-    ['expo-notifications', { icon: './assets/images/notification-icon.png', color: '#60E9FF', defaultChannel: 'remindora-default' }],
+    ['expo-notifications', { icon: './assets/images/notification-icon.png', color: '#60E9FF', defaultChannel: 'remindora-alarm', sounds: ['./assets/sounds/remindora_alarm.wav'] }],
     ['expo-camera', { cameraPermission: 'Remindora uses the camera to scan the QR code that links this phone to your account.', recordAudioAndroid: false }],
     ['expo-local-authentication', { faceIDPermission: 'Remindora uses biometrics to lock the app and confirm device linking.' }],
     [

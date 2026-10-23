@@ -33,7 +33,7 @@ export default function Link() {
           clearInterval(t);
           const tokens = await api<AuthTokensDTO>(`/pairing/claim/${state.claim.claimId}/complete`, { body: { claimSecret: state.claim.claimSecret }, auth: false });
           await accept(tokens);
-          router.replace('/today');
+          router.replace('/reminders');
         }
         if (s.status === 'REJECTED' || s.status === 'EXPIRED') {
           clearInterval(t);

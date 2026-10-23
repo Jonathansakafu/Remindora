@@ -10,7 +10,7 @@ export function DesktopRedirect() {
   const status = useSession((s) => s.status);
   useEffect(() => {
     if (!isTauri()) return;
-    if (status === 'signed_in') router.replace('/app/today');
+    if (status === 'signed_in') router.replace('/app/reminders');
     if (status === 'signed_out') router.replace('/login');
   }, [status, router]);
   return null;

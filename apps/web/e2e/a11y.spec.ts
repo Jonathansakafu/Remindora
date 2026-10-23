@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { quickAdd, signIn, uniqueEmail } from './helpers';
 
 /** WCAG 2.1 AA audit of the main screens (dark theme, light theme and mobile width). */
-const PAGES = ['/app/today', '/app/inbox', '/app/upcoming', '/app/calendar', '/app/focus', '/app/habits', '/app/analytics', '/app/countdowns', '/app/matrix', '/app/settings', '/app/settings/notifications', '/app/settings/devices', '/app/settings/billing'];
+const PAGES = ['/app/reminders', '/app/checklist', '/app/stopwatch', '/app/more', '/app/today', '/app/inbox', '/app/upcoming', '/app/calendar', '/app/focus', '/app/habits', '/app/analytics', '/app/countdowns', '/app/matrix', '/app/settings', '/app/settings/notifications', '/app/settings/devices'];
 
 async function audit(page: Page, label: string) {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();

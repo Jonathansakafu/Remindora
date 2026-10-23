@@ -27,7 +27,7 @@ export async function initDesktop(navigate: (href: string) => void): Promise<() 
       if (!code) return;
       const tokens = await api<AuthTokensDTO>('/auth/oauth/exchange', { body: { code }, auth: false });
       await useSession.getState().accept(tokens);
-      navigate('/app/today');
+      navigate('/app/reminders');
     } else if (path === 'task') {
       const id = url.searchParams.get('id');
       if (id) useUi.getState().selectTask(id);

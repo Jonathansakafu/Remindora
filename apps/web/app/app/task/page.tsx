@@ -10,7 +10,7 @@ function Inner() {
   const select = useUi((s) => s.selectTask);
   useEffect(() => {
     if (id) select(id);
-    router.replace('/app/today');
+    router.replace('/app/reminders');
   }, [id, select, router]);
   return null;
 }

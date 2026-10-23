@@ -1,6 +1,6 @@
 import { decryptSecret } from '@remindora/auth';
 import type { Device, Notification } from '@remindora/database';
-import { androidChannelFor, REMINDER_CATEGORY, templates } from '@remindora/notifications';
+import { androidChannelForNotification, REMINDER_CATEGORY, templates } from '@remindora/notifications';
 import { realtimeRooms, type NotificationChannel, type NotificationDTO } from '@remindora/types';
 import type { Deps } from '../deps';
 import { PushError, type PushMessage } from './push';
@@ -91,7 +91,7 @@ export async function deliver(d: Deps, n: Notification, channels: NotificationCh
     title: n.title,
     body: n.body,
     data: { type: n.kind.toLowerCase(), notificationId: n.id, reminderId: n.reminderId ?? '', taskId: n.taskId ?? '', priority: n.priority, url: opts.link },
-    channelId: androidChannelFor(n.priority).id,
+    channelId: androidChannelForNotification(n.kind, n.priority).id,
     tag: n.reminderId ?? n.id,
     categoryId: n.reminderId ? REMINDER_CATEGORY : undefined,
     sound: !opts.silent,

@@ -5,3 +5,4 @@ export * from './habits';
 export * from './sync';
 export * from './ics';
 export * from './timezone-sync';
+export * from './repeat';

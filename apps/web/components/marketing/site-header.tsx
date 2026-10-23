@@ -44,7 +44,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           {signedIn ? (
-            <Link href="/app/today" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:brightness-110">
+            <Link href="/app/reminders" className="inline-flex h-10 items-center rounded-xl bg-cyan px-4 text-sm font-semibold text-on-accent hover:brightness-110">
               Open Remindora
             </Link>
           ) : (
@@ -77,7 +77,7 @@ export function SiteHeader() {
           </ul>
           <div className="grid grid-cols-2 gap-2">
             {signedIn ? (
-              <Link href="/app/today" className="col-span-2 inline-flex h-11 items-center justify-center rounded-xl bg-cyan text-sm font-semibold text-on-accent">
+              <Link href="/app/reminders" className="col-span-2 inline-flex h-11 items-center justify-center rounded-xl bg-cyan text-sm font-semibold text-on-accent">
                 Open Remindora
               </Link>
             ) : (

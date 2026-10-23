@@ -6,6 +6,7 @@ import { API_URL } from './config';
 import { flushOutbox } from './offline';
 import { keys, patchTask, refetchTasks } from './queries';
 import { useSession } from './session';
+import { useAlarm } from './alarm';
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 
@@ -22,10 +23,16 @@ export function connectRealtime(qc: QueryClient) {
   });
   s.on('task.deleted', () => refetchTasks(qc));
   s.on('project.upserted', () => void qc.invalidateQueries({ queryKey: keys.projects }));
-  s.on('notification.created', () => void qc.invalidateQueries({ queryKey: keys.notifications }));
+  s.on('notification.created', ({ notification, alert }) => {
+    void qc.invalidateQueries({ queryKey: keys.notifications });
+    if (notification.kind === 'REMINDER' && alert?.sound !== false) {
+      useAlarm.getState().ring({ notificationId: notification.id, taskId: notification.taskId, title: notification.title, body: notification.body });
+    }
+  });
   // Resolved on another device: clear our tray copy immediately (the data push does this when we're in the background).
   s.on('notification.resolved', async ({ notificationId, reminderId }) => {
     void qc.invalidateQueries({ queryKey: keys.notifications });
+    useAlarm.getState().dismiss(notificationId);
     await dismissPresented(notificationId, reminderId);
   });
   s.on('session.revoked', () => void useSession.getState().clear());

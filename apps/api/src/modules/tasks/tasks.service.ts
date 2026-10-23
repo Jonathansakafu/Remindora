@@ -98,6 +98,12 @@ export class TasksService {
         Object.assign(where, open, mine, { dueAt: { gte: r.from!, lte: r.to! } });
         break;
       }
+      case 'reminders': {
+        // Simple "alarms" list: open timed tasks, soonest first, including ones missed this past week.
+        Object.assign(where, open, mine, { allDay: false, dueAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } });
+        orderBy = [{ dueAt: 'asc' }];
+        break;
+      }
       case 'overdue': {
         const startOfToday = smartListRange('upcoming', now, user.timezone).from!;
         const sod = new Date(startOfToday.getTime() - 86_400_000);

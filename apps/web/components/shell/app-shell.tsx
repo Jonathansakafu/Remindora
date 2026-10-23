@@ -13,6 +13,9 @@ import { useSession } from '@/lib/session';
 import { useUi } from '@/lib/ui-store';
 import { QuickAdd } from '../task/quick-add';
 import { TaskDetail } from '../task/task-detail';
+import { AlarmOverlay } from '@/components/alarm/alarm-overlay';
+import { ReminderForm } from '@/components/reminders/reminder-form';
+import { useReminderForm } from '@/lib/reminder-form';
 import { ApprovalBanner } from './approval-banner';
 import { NotificationPrompt } from './notification-prompt';
 import { BulkBar } from './bulk-bar';
@@ -36,7 +39,10 @@ function useShortcuts() {
         return;
       }
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === 'n' || e.key === 'q') {
+      if (e.key === 'n') {
+        e.preventDefault();
+        useReminderForm.getState().open();
+      } else if (e.key === 'q') {
         e.preventDefault();
         ui.setQuickAdd(true);
       } else if (e.key === '/') {
@@ -78,6 +84,7 @@ function useIsDesktop() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   useTimezoneSync();
+  const openReminderForm = useReminderForm((s) => s.open);
   const status = useSession((s) => s.status);
   const accessToken = useSession((s) => s.accessToken);
   const router = useRouter();
@@ -160,14 +167,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {unread > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-on-accent">{unread > 99 ? '99+' : unread}</span>}
               </button>
             </Tooltip>
-            <Button variant="primary" size="sm" className="hidden sm:inline-flex" onClick={() => ui.setQuickAdd(true)}>
-              <Plus size={15} /> Add task <Kbd>N</Kbd>
-            </Button>
           </div>
         </header>
 
         <ApprovalBanner />
         <NotificationPrompt />
+        <AlarmOverlay />
 
         <div className="flex min-h-0 flex-1">
           <main id="main" tabIndex={-1} className="scroll-thin min-w-0 flex-1 overflow-y-auto pb-28 focus:outline-none md:pb-8">
@@ -199,7 +204,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {mobileTabs.slice(0, 2).map((t) => (
           <MobileTab key={t.href} {...t} active={pathname.startsWith(t.href)} />
         ))}
-        <button type="button" onClick={() => ui.setQuickAdd(true)} className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan text-on-accent shadow-[0_8px_24px_-6px_rgb(96_233_255/0.7)]" aria-label="Add task">
+        <button type="button" onClick={() => openReminderForm()} className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan text-on-accent shadow-[0_8px_24px_-6px_rgb(96_233_255/0.7)]" aria-label="New reminder">
           <Plus size={22} />
         </button>
         {mobileTabs.slice(2).map((t) => (
@@ -210,6 +215,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Suspense>
         <QuickAdd />
       </Suspense>
+      <ReminderForm />
       <CommandPalette />
       <NotificationCenter />
       <BulkBar />

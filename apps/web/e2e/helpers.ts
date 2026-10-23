@@ -30,12 +30,12 @@ export async function startSignIn(page: Page, email: string) {
 
 export async function signIn(page: Page, email: string) {
   await startSignIn(page, email);
-  await page.waitForURL('**/app/today');
+  await page.waitForURL('**/app/reminders');
 }
 
 export async function quickAdd(page: Page, text: string) {
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /^add task/i }).first().click();
+  await page.locator('body').press('q');
   await page.getByLabel('Describe the task').fill(text);
   await page.keyboard.press('Enter');
   await expect(page.getByLabel('Describe the task')).toBeHidden();

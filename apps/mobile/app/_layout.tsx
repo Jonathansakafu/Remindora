@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { authenticate, loadLockPreference, useLock } from '../src/lib/biometric';
 import { flushOutbox, watchConnectivity } from '../src/lib/offline';
 import { handleResponse, registerForPush, setupChannelsAndActions } from '../src/lib/push';
+import { useAlarm } from '../src/lib/alarm';
 import { refetchTasks } from '../src/lib/queries';
 import { connectRealtime, disconnectRealtime } from '../src/lib/realtime';
 import { adoptDeviceTimezone, refreshSession, useSession } from '../src/lib/session';
@@ -69,7 +70,7 @@ export default function RootLayout() {
     if (!ready) return;
     const publicRoute = segments[0] === 'login' || segments[0] === 'link' || segments[0] === 'auth' || segments[0] === 'about';
     if (status === 'signed_out' && !publicRoute) router.replace('/login');
-    if (status === 'signed_in' && segments[0] === 'login') router.replace('/today');
+    if (status === 'signed_in' && segments[0] === 'login') router.replace('/reminders');
   }, [status, segments, ready]);
 
   useEffect(() => {
@@ -79,6 +80,21 @@ export default function RootLayout() {
     void adoptDeviceTimezone();
     return () => disconnectRealtime();
   }, [status, sessionId]);
+
+  // A reminder arriving while the app is open rings the full-screen alarm.
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener((n) => {
+      const data = n.request.content.data as { type?: string; notificationId?: string; taskId?: string };
+      if (data.type === 'reminder' && data.notificationId) {
+        useAlarm.getState().ring({ notificationId: data.notificationId, taskId: data.taskId || null, title: n.request.content.title ?? 'Reminder', body: n.request.content.body ?? '' });
+      }
+    });
+    return () => sub.remove();
+  }, []);
+  const ringing = useAlarm((s) => s.queue.length > 0);
+  useEffect(() => {
+    if (ringing && segments[0] !== 'alarm') router.push('/alarm');
+  }, [ringing, segments]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((r) => void handleResponse(r, (id) => router.push({ pathname: '/task', params: { id } })));
@@ -98,6 +114,8 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="link" options={{ presentation: 'modal' }} />
           <Stack.Screen name="task" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="reminder-form" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="alarm" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
         </Stack>
         <LockOverlay />
       </PersistQueryClientProvider>

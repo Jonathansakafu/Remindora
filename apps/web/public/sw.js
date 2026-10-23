@@ -31,7 +31,7 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(self.clients.openWindow(url));
     return;
   }
-  const url = d.taskId ? `/app/task?id=${d.taskId}` : '/app/today';
+  const url = d.taskId ? `/app/task?id=${d.taskId}` : '/app/reminders';
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then((wins) => {
       const existing = wins.find((w) => 'focus' in w);
