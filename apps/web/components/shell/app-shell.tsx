@@ -17,6 +17,7 @@ import { AlarmOverlay } from '@/components/alarm/alarm-overlay';
 import { ReminderForm } from '@/components/reminders/reminder-form';
 import { useReminderForm } from '@/lib/reminder-form';
 import { ApprovalBanner } from './approval-banner';
+import { BackButton } from './back-button';
 import { NotificationPrompt } from './notification-prompt';
 import { BulkBar } from './bulk-bar';
 import { CommandPalette } from './command-palette';
@@ -147,6 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button type="button" className="rounded-lg p-2 text-ink-muted hover:bg-white/5 md:hidden" onClick={() => ui.setMobileNav(true)} aria-label="Open navigation">
             <MenuIcon size={19} />
           </button>
+          <BackButton />
           <button
             type="button"
             onClick={() => ui.setPalette(true)}

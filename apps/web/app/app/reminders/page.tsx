@@ -83,7 +83,7 @@ export default function RemindersPage() {
   }, [tasks, tz]);
 
   return (
-    <div className="mx-auto px-4 pb-24 pt-5 md:px-8 md:pt-7 max-w-3xl">
+    <div className="mx-auto px-4 pt-5 md:px-8 md:pt-7 max-w-3xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Reminders</h1>

@@ -24,7 +24,7 @@ export default function Settings() {
   }, []);
 
   return (
-    <Screen title="Settings" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
+    <Screen title="Settings" back>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 4, paddingBottom: 60 + systemBottom }}>
         <SectionLabel>Notifications</SectionLabel>
         <Glass>

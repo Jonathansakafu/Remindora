@@ -1,6 +1,6 @@
 [package]
 name = "remindora-desktop"
-version = "0.2.2"
+version = "0.2.3"
 description = "Remindora for macOS, Windows and Linux"
 edition = "2021"
 rust-version = "1.77"

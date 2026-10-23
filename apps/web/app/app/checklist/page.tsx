@@ -62,7 +62,7 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="mx-auto px-4 pb-24 pt-5 md:px-8 md:pt-7 max-w-2xl">
+    <div className="mx-auto px-4 pt-5 md:px-8 md:pt-7 max-w-2xl">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Daily checklist</h1>
       <p className="mt-1 text-ink-muted">
         {today.toFormat('cccc d LLLL')} · Your list starts fresh every morning.

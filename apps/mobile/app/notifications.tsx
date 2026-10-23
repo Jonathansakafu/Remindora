@@ -23,7 +23,7 @@ export default function NotificationsScreen() {
     }
   }
   return (
-    <Screen title="Notifications" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
+    <Screen title="Notifications" back>
       <FlatList
         data={data?.items ?? []}
         keyExtractor={(n) => n.id}

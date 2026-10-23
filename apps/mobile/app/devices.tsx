@@ -13,7 +13,7 @@ const OS: Record<string, string> = { WEB: 'Web', DESKTOP_MACOS: 'macOS', DESKTOP
 export default function Devices() {
   const { data = [], refetch } = useQuery({ queryKey: ['devices'], queryFn: () => api<DeviceDTO[]>('/devices') });
   return (
-    <Screen title="Linked devices" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
+    <Screen title="Linked devices" back>
       <FlatList
         data={data}
         keyExtractor={(d) => d.id}

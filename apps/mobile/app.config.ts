@@ -14,7 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'Remindora',
   slug: 'remindora',
   owner: 'jonathansakafu',
-  version: '0.2.2',
+  version: '0.2.3',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   scheme: 'remindora',

@@ -17,7 +17,7 @@ export default function About() {
     { label: 'Portfolio', value: 'View portfolio', url: c.portfolio },
   ];
   return (
-    <Screen title="About" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
+    <Screen title="About" back>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 + systemBottom }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Image source={require('../assets/images/icon.png')} style={{ width: 60, height: 60, borderRadius: 14 }} accessible={false} />

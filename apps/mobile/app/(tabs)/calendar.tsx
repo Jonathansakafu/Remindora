@@ -29,7 +29,7 @@ export default function Calendar() {
   const tasks = onDay(selected).sort((a, b) => (a.dueAt ?? '').localeCompare(b.dueAt ?? ''));
 
   return (
-    <Screen title="Calendar" subtitle={selected.toFormat('cccc, d LLLL')}>
+    <Screen back="/more" title="Calendar" subtitle={selected.toFormat('cccc, d LLLL')}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 14, gap: 8, paddingVertical: 8 }} style={{ flexGrow: 0 }}>
         {days.map((d) => {
           const active = d.hasSame(selected, 'day');

@@ -26,7 +26,7 @@ export default function Habits() {
     }
   }
   return (
-    <Screen title="Habits" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
+    <Screen title="Habits" back>
       <FlatList
         data={data}
         keyExtractor={(h) => h.id}

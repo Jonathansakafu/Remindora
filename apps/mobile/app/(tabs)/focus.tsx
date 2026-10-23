@@ -66,7 +66,7 @@ export default function Focus() {
   const mm = String(Math.floor(remaining / 60_000)).padStart(2, '0');
   const ss = String(Math.floor((remaining % 60_000) / 1000)).padStart(2, '0');
   return (
-    <Screen title="Focus" subtitle={`${phase === 'FOCUS' ? 'Focus' : phase === 'SHORT_BREAK' ? 'Short break' : 'Long break'} · cycle ${cycle}/4`}>
+    <Screen back="/more" title="Focus" subtitle={`${phase === 'FOCUS' ? 'Focus' : phase === 'SHORT_BREAK' ? 'Short break' : 'Long break'} · cycle ${cycle}/4`}>
       <View style={{ padding: 20 }}>
         <Glass style={{ alignItems: 'center' }}>
           <Text accessibilityRole="timer" accessibilityLabel={`${mm} minutes ${ss} seconds remaining`} style={{ color: colors.cyan, fontSize: 76, fontWeight: '300', fontVariant: ['tabular-nums'], marginVertical: 24 }}>

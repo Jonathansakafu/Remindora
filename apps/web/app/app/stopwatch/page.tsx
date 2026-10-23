@@ -192,7 +192,7 @@ function Timer() {
 export default function StopwatchPage() {
   const [mode, setMode] = useState<'stopwatch' | 'timer'>('stopwatch');
   return (
-    <div className="mx-auto px-4 pb-24 pt-5 md:px-8 md:pt-7 max-w-2xl">
+    <div className="mx-auto px-4 pt-5 md:px-8 md:pt-7 max-w-2xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">{mode === 'stopwatch' ? 'Stopwatch' : 'Timer'}</h1>

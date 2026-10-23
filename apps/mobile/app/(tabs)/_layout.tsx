@@ -11,6 +11,7 @@ export default function TabsLayout() {
   const bottom = useSafeAreaInsets().bottom;
   return (
     <Tabs
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.cyan,

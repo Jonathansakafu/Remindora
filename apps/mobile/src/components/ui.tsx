@@ -1,14 +1,30 @@
 import { BlurView } from 'expo-blur';
+import { router, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../lib/theme';
 
-export function Screen({ children, title, subtitle, right }: { children: ReactNode; title?: string; subtitle?: string; right?: ReactNode }) {
+/**
+ * `back` shows "‹ Back" above the title: `true` returns to the previous screen (or More when there
+ * is none); an href always goes there (used by tool screens opened from More).
+ */
+export function Screen({ children, title, subtitle, right, back }: { children: ReactNode; title?: string; subtitle?: string; right?: ReactNode; back?: true | Href }) {
+  const goBack = () => {
+    if (typeof back === 'string' || (back && typeof back === 'object')) router.navigate(back as Href);
+    else if (router.canGoBack()) router.back();
+    else router.replace('/more');
+  };
   return (
     <LinearGradient colors={['#0B1330', '#070D22', '#070D22']} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        {back ? (
+          <Pressable onPress={goBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 14, paddingTop: 8, opacity: pressed ? 0.6 : 1 })}>
+            <Text style={{ color: colors.cyan, fontSize: 26, lineHeight: 28, marginRight: 2 }}>‹</Text>
+            <Text style={{ color: colors.cyan, fontSize: 16, fontWeight: '600' }}>Back</Text>
+          </Pressable>
+        ) : null}
         {title ? (
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
