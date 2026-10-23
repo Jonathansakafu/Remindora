@@ -1,34 +1,37 @@
 # syntax=docker/dockerfile:1.7
-# SERVICE picks the final stage when the platform can't pass --target (e.g. Railway): api | workers | web
+# SERVICE picks what to build and the final stage (Railway can't pass --target): api | workers | web
 ARG SERVICE=api
-# Multi-stage build for the Remindora backend services and web app.
-#   docker build --target api     -t remindora-api .
-#   docker build --target workers -t remindora-workers .
-#   docker build --target web     -t remindora-web --build-arg NEXT_PUBLIC_API_URL=https://api.example.com .
+# Multi-stage build for the Remindora backend services and web app. Each image is built from a
+# `turbo prune` of just that app and the packages it uses, so it never carries the mobile/desktop
+# toolchains (keeps images small enough to export reliably).
+#   docker build --build-arg SERVICE=api     -t remindora-api .
+#   docker build --build-arg SERVICE=workers -t remindora-workers .
+#   docker build --build-arg SERVICE=web     -t remindora-web --build-arg NEXT_PUBLIC_API_URL=https://api.example.com .
 
 FROM node:24-bookworm-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
+FROM base AS pruner
+ARG SERVICE
+COPY . .
+RUN npx -y turbo@2.11.10 prune @remindora/${SERVICE} --docker
+
 FROM base AS deps
-COPY package.json package-lock.json turbo.json tsconfig.base.json ./
-COPY packages ./packages
-COPY apps/api/package.json apps/api/package.json
-COPY apps/workers/package.json apps/workers/package.json
-COPY apps/web/package.json apps/web/package.json
-COPY apps/mobile/package.json apps/mobile/package.json
-COPY apps/desktop/package.json apps/desktop/package.json
+COPY --from=pruner /app/out/json/ ./
 # redis-memory-server (local dev only) would otherwise compile Redis from source here.
 ENV REDISMS_DISABLE_POSTINSTALL=1
-RUN npm ci --ignore-scripts=false
+RUN npm ci --ignore-scripts=false --no-audit --no-fund
 
 FROM deps AS build
+ARG SERVICE
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY=
 ARG NEXT_PUBLIC_AUTH_SAME_ORIGIN=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY NEXT_PUBLIC_AUTH_SAME_ORIGIN=$NEXT_PUBLIC_AUTH_SAME_ORIGIN NEXT_TELEMETRY_DISABLED=1 BUILD_STANDALONE=1
-COPY . .
-RUN npx turbo run build --filter=@remindora/api --filter=@remindora/workers --filter=@remindora/web
+COPY --from=pruner /app/out/full/ ./
+COPY tsconfig.base.json ./
+RUN npx turbo run build --filter=@remindora/${SERVICE}
 
 # ── API ──
 FROM base AS api
