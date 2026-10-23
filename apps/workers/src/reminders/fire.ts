@@ -68,7 +68,7 @@ export async function fireReminder(d: Deps, job: FireReminderJob, scheduler: Sch
 
     const ent = await entitlementsFor(d.prisma, r.userId);
     const constant = r.constant && ent.features['reminders.constant'];
-    const decision = decideChannels(task.priority, prefs, { constant, emailEntitled: ent.features['reminders.email'] });
+    const decision = decideChannels(task.priority, prefs, { constant, emailEntitled: ent.features['reminders.email'], attempt: r.attempt });
     const occurrence = r.occurrenceAt ?? r.nextFireAt ?? now;
     const key = deliveryKey(r.id, occurrence, r.attempt);
 

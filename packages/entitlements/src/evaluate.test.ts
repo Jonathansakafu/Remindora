@@ -16,7 +16,7 @@ describe('premium entitlements', () => {
     });
     expect(hasFeature(e, 'view.kanban')).toBe(true);
     expect(hasFeature(e, 'view.timeline')).toBe(false);
-    expect(hasFeature(e, 'reminders.email')).toBe(false);
+    expect(hasFeature(e, 'reminders.email')).toBe(true);
     expect(hasFeature(e, 'ai')).toBe(false);
   });
 

@@ -6,11 +6,15 @@ import type { NotificationChannel, Priority } from '@remindora/types';
  * *when* and *where* to alert by calling these, so behaviour is unit-testable and
  * identical everywhere.
  *
- *  CRITICAL  push + desktop + web push (+ email if opted in), re-alert every
+ *  CRITICAL  push + desktop + web push, re-alert every
  *            `criticalRepeatMinutes` (default 30) until completed/snoozed/acknowledged.
  *  HIGH      due-time alert, re-alert every `highRepeatMinutes` (default 2h) until acknowledged.
  *  MEDIUM    single due-time alert, optional one follow-up.
  *  LOW/NONE  silent notification-center item, or morning digest only.
+ *
+ * Email (when the user turns it on) goes out with the first alert of every MEDIUM+
+ * reminder; repeats are emailed only for CRITICAL with `criticalEmail`, so a
+ * nagging reminder never floods the inbox.
  *
  * Every repeat is bounded by `maxRealerts`. Nothing here is mandatory: every
  * interval and channel comes from user preferences with per-project overrides.
@@ -96,7 +100,7 @@ export interface DeliveryDecision {
   reason: string;
 }
 
-export function decideChannels(priority: Priority, prefs: EffectivePrefs, opts: { constant?: boolean; emailEntitled?: boolean } = {}): DeliveryDecision {
+export function decideChannels(priority: Priority, prefs: EffectivePrefs, opts: { constant?: boolean; emailEntitled?: boolean; attempt?: number } = {}): DeliveryDecision {
   const inApp: NotificationChannel[] = prefs.channels.inApp ? ['IN_APP'] : [];
   if (prefs.muted) return { deliver: inApp.length > 0, channels: inApp, silent: true, reason: 'project_muted' };
 
@@ -110,7 +114,10 @@ export function decideChannels(priority: Priority, prefs: EffectivePrefs, opts: 
   if (prefs.channels.push) channels.push('PUSH');
   if (prefs.channels.desktop) channels.push('DESKTOP');
   if (prefs.channels.webPush) channels.push('WEB_PUSH');
-  if (effective === 'CRITICAL' && prefs.criticalEmail && prefs.channels.email && opts.emailEntitled !== false) channels.push('EMAIL');
+  if (prefs.channels.email && opts.emailEntitled !== false) {
+    const firstAlert = (opts.attempt ?? 0) === 0;
+    if (firstAlert || (effective === 'CRITICAL' && prefs.criticalEmail)) channels.push('EMAIL');
+  }
   return { deliver: channels.length > 0, channels, silent: false, reason: effective.toLowerCase() };
 }
 

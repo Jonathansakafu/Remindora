@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { NotificationChannels } from '../src/components/notification-channels';
 import { Button, Glass, Screen, SectionLabel } from '../src/components/ui';
 import { api } from '../src/lib/api';
 import { biometricsAvailable, enrollBiometricReauth, setAppLock, useLock } from '../src/lib/biometric';
@@ -30,8 +31,11 @@ export default function Settings() {
             <Button label="Send a test alert" onPress={() => api('/notifications/test', { body: { priority: 'HIGH' } }).then(() => Alert.alert('Sent', 'A test alert is on its way.'))} />
             <Button label="Channel sounds & vibration" onPress={openChannelSettings} />
           </View>
-          <Text style={{ color: colors.textFaint, fontSize: 12, marginTop: 10 }}>Intervals, quiet hours and digests are set on the web or desktop app and apply to every device.</Text>
         </Glass>
+
+        <SectionLabel>Where to notify me</SectionLabel>
+        <NotificationChannels email={user?.email} />
+        <Text style={{ color: colors.textFaint, fontSize: 12, marginTop: 6, marginHorizontal: 4 }}>These apply to all your devices. Repeat intervals and quiet hours are on the web or desktop app.</Text>
 
         <SectionLabel>Reliability</SectionLabel>
         <Glass>

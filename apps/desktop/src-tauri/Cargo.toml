@@ -1,6 +1,6 @@
 [package]
 name = "remindora-desktop"
-version = "0.1.0"
+version = "0.1.1"
 description = "Remindora for macOS, Windows and Linux"
 edition = "2021"
 rust-version = "1.77"
@@ -15,6 +15,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-notification = "2"
+tauri-plugin-autostart = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 tauri-plugin-deep-link = "2"

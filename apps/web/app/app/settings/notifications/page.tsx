@@ -7,19 +7,15 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Section, SettingRow } from '@/components/settings/section';
 import { api } from '@/lib/api';
-import { VAPID_PUBLIC_KEY } from '@/lib/config';
+import { enableDeviceNotifications } from '@/lib/device-notifications';
 import { relative } from '@/lib/dates';
 import { isTauri } from '@/lib/platform';
-import { keys, reportError, useFeature, usePrefs, useProjects } from '@/lib/queries';
+import { keys, reportError, useFeature, useMe, usePrefs, useProjects } from '@/lib/queries';
 
-function b64ToUint8(b64: string) {
-  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
 
 export default function NotificationSettings() {
   const { data: prefs } = usePrefs();
+  const { data: me } = useMe();
   const { data: projects = [] } = useProjects();
   const qc = useQueryClient();
   const emailEntitled = useFeature('reminders.email');
@@ -37,25 +33,14 @@ export default function NotificationSettings() {
   }
 
   async function enableBrowser() {
-    if (isTauri()) {
-      const n = await import('@tauri-apps/plugin-notification');
-      if ((await n.requestPermission()) === 'granted') toast.success('Desktop notifications enabled');
-      return;
-    }
-    const result = await Notification.requestPermission();
-    setPermission(result);
-    if (result !== 'granted') return toast('Notifications are blocked in your browser settings.');
-    if (VAPID_PUBLIC_KEY && 'serviceWorker' in navigator) {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(VAPID_PUBLIC_KEY) });
-        await api('/devices/current/push', { body: { provider: 'webpush', token: JSON.stringify(sub) } });
-        toast.success('Push notifications enabled for this browser');
-      } catch (e) {
-        reportError(e, 'Couldn’t register for push');
-      }
-    } else {
-      toast.success('Alerts will show while Remindora is open');
+    try {
+      const result = await enableDeviceNotifications();
+      if (result !== 'unsupported') setPermission(result === 'granted' ? 'granted' : result);
+      if (result === 'granted') toast.success(isTauri() ? 'Desktop notifications enabled' : 'Notifications enabled for this browser');
+      else if (result === 'denied') toast('Notifications are blocked in your browser or system settings.');
+      else if (result === 'unsupported') toast('This browser doesn’t support notifications.');
+    } catch (e) {
+      reportError(e, 'Couldn’t register for push');
     }
   }
 
@@ -83,20 +68,27 @@ export default function NotificationSettings() {
         <p className="text-xs text-ink-faint">Permission: {permission}. Android delivery uses Firebase Cloud Messaging; Android’s own channel, battery and Do Not Disturb settings always apply.</p>
       </Section>
 
-      <Section title="Channels" description="Where alerts are delivered. Each priority uses the channels you enable here.">
-        {([['push', 'Mobile push', 'Android app (FCM).'], ['desktop', 'Desktop', 'Native notifications in the desktop app.'], ['webPush', 'Web push', 'Browser notifications, even when the tab is closed.'], ['inApp', 'Notification center', 'Always recommended.']] as const).map(([k, label, hint]) => (
+      <Section title="Where to notify me" description="Choose how reminders reach you. Turn on as many as you like — each alert goes to every channel that’s on.">
+        {([
+          ['push', 'Phone notifications', 'Pop-up alerts on your Android phone, even when the app is closed.'],
+          ['desktop', 'Desktop app notifications', 'System notifications from the Windows, Mac or Linux app (it keeps running in the tray).'],
+          ['webPush', 'Browser notifications', 'Alerts from this website, even when the tab is closed. Turn on “This device” above first.'],
+          ['inApp', 'Notification center', 'The bell inside Remindora. Recommended.'],
+        ] as const).map(([k, label, hint]) => (
           <SettingRow key={k} label={label} hint={hint}><Switch checked={prefs.channels[k]} onCheckedChange={(v) => save({ channels: { [k]: v } })} aria-label={label} /></SettingRow>
         ))}
-        <SettingRow label="Email" hint={emailEntitled ? 'Used for critical alerts and digests.' : 'Email reminders are a Premium feature.'}>
-          {emailEntitled ? <Switch checked={prefs.channels.email} onCheckedChange={(v) => save({ channels: { email: v } })} aria-label="Email" /> : <a href="/app/settings/billing" className="flex items-center gap-1 text-xs text-amber"><Sparkles size={12} /> Premium</a>}
+        <SettingRow label="Email" hint={emailEntitled ? `Send reminders to ${me?.email ?? 'your email'} too (once per reminder, plus the daily digest).` : 'Email reminders are a Premium feature.'}>
+          {emailEntitled ? <Switch checked={prefs.channels.email} onCheckedChange={(v) => save({ channels: { email: v } })} aria-label="Email reminders" /> : <a href="/app/settings/billing" className="flex items-center gap-1 text-xs text-amber"><Sparkles size={12} /> Premium</a>}
         </SettingRow>
+        {emailEntitled && prefs.channels.email && (
+          <SettingRow label="Email every repeat of critical reminders" hint="Off: critical reminders are emailed once. On: every repeat is emailed too.">
+            <Switch checked={prefs.criticalEmail} onCheckedChange={(v) => save({ criticalEmail: v })} aria-label="Email every critical repeat" />
+          </SettingRow>
+        )}
       </Section>
 
       <Section title="Priority alerts" description="Re-alerts continue until you complete, snooze, acknowledge or stop them — up to the maximum below.">
         <SettingRow label="Critical repeats" hint="Push + desktop on every device. Default 30 min.">{intervalSelect(prefs.criticalRepeatMinutes, (v) => save({ criticalRepeatMinutes: v }), 'Critical repeat interval')}</SettingRow>
-        <SettingRow label="Email critical alerts too" hint="Optional.">
-          <Switch disabled={!emailEntitled} checked={prefs.criticalEmail} onCheckedChange={(v) => save({ criticalEmail: v })} aria-label="Email critical alerts" />
-        </SettingRow>
         <SettingRow label="High repeats" hint="Default 2 hours.">{intervalSelect(prefs.highRepeatMinutes, (v) => save({ highRepeatMinutes: v }), 'High repeat interval')}</SettingRow>
         <SettingRow label="Medium follow-up" hint="One extra nudge, or none.">
           <Select aria-label="Medium follow-up" value={prefs.mediumFollowUpMinutes ?? 0} onChange={(e) => save({ mediumFollowUpMinutes: Number(e.target.value) || null })} className="h-9 w-32">

@@ -62,6 +62,9 @@ fn open_quick_add(app: &AppHandle) {
     let _ = app.emit("remindora://quick-add", ());
 }
 
+/// Passed by the login-item launcher: start in the tray without showing the window.
+const HIDDEN_ARG: &str = "--hidden";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let quick_add = Shortcut::new(Some(Modifiers::ALT | Modifiers::SUPER), Code::Space);
@@ -79,6 +82,8 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_notification::init())
+        // Start with the computer (into the tray, no window) so reminders arrive without opening the app.
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec![HIDDEN_ARG])))
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -94,6 +99,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![secure_get, secure_set, secure_delete])
         .setup(move |app| {
             app.global_shortcut().register(quick_add).ok();
+
+            if std::env::args().any(|a| a == HIDDEN_ARG) {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
+            }
 
             #[cfg(any(windows, target_os = "linux"))]
             {

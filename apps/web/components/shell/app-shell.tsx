@@ -13,6 +13,7 @@ import { useUi } from '@/lib/ui-store';
 import { QuickAdd } from '../task/quick-add';
 import { TaskDetail } from '../task/task-detail';
 import { ApprovalBanner } from './approval-banner';
+import { NotificationPrompt } from './notification-prompt';
 import { BulkBar } from './bulk-bar';
 import { CommandPalette } from './command-palette';
 import { mobileTabs } from './nav';
@@ -164,6 +165,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <ApprovalBanner />
+        <NotificationPrompt />
 
         <div className="flex min-h-0 flex-1">
           <main id="main" tabIndex={-1} className="scroll-thin min-w-0 flex-1 overflow-y-auto pb-28 focus:outline-none md:pb-8">

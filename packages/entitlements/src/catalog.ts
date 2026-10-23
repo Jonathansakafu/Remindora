@@ -53,7 +53,7 @@ export interface PlanDefinition {
   features: Record<FeatureKey, boolean>;
 }
 
-const FREE_FEATURES: FeatureKey[] = ['view.list', 'view.kanban', 'view.calendar', 'view.agenda', 'view.matrix', 'nlp', 'sync', 'widgets', 'themes', 'stats.basic'];
+const FREE_FEATURES: FeatureKey[] = ['view.list', 'view.kanban', 'view.calendar', 'view.agenda', 'view.matrix', 'nlp', 'sync', 'widgets', 'themes', 'stats.basic', 'reminders.email'];
 
 function features(enabled: readonly FeatureKey[]): Record<FeatureKey, boolean> {
   return Object.fromEntries(FEATURE_KEYS.map((k) => [k, enabled.includes(k)])) as Record<FeatureKey, boolean>;

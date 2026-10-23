@@ -27,7 +27,7 @@ beforeAll(async () => {
     prisma: h.prisma,
     redis,
     emitter: new Emitter(redis),
-    email: { send: async () => ({ id: null }) },
+    email: { send: async (m) => (mails.push({ to: m.to, subject: m.subject }), { id: null }) },
     push: {
       fcm: null,
       webPush: null,
@@ -69,7 +69,27 @@ async function drainDismissJobs() {
   await queue.close();
 }
 
+const mails: Array<{ to: string; subject: string }> = [];
+
 describe('priority notification engine', () => {
+  it('free accounts can turn on email; the first alert is emailed, repeats are not', async () => {
+    const email = uniqueEmail('mail');
+    const me = await signIn(h, email, DESKTOP);
+    await h.http().patch('/auth/me').set(auth(me.accessToken)).send({ timezone: 'UTC' }).expect(200);
+    const prefs = await h.http().patch('/notifications/preferences').set(auth(me.accessToken)).send({ channels: { email: true } }).expect(200);
+    expect(prefs.body.channels).toMatchObject({ email: true, push: true, desktop: true });
+
+    const { reminderId } = await dueTask(me.accessToken, 'HIGH');
+    const first = await fireReminder(deps, { reminderId, fireAt: new Date().toISOString() }, scheduler);
+    expect(first.status === 'fired' && first.channels).toContain('EMAIL');
+    expect(mails.filter((m) => m.to === email)).toHaveLength(1);
+
+    const next = scheduled.find((s) => s.reminderId === reminderId)!;
+    const repeat = await fireReminder(deps, { reminderId, fireAt: next.fireAt.toISOString() }, scheduler, next.fireAt);
+    expect(repeat.status === 'fired' && repeat.channels).not.toContain('EMAIL');
+    expect(mails.filter((m) => m.to === email)).toHaveLength(1);
+  });
+
   it('critical alert reaches every device; acknowledging on one dismisses it everywhere and stops re-alerts', async () => {
     const { desktop, phone, desktopSocket, phoneSocket } = await twoDevices();
     const { reminderId } = await dueTask(desktop.accessToken, 'CRITICAL');

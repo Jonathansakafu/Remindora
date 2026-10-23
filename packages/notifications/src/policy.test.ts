@@ -10,7 +10,18 @@ describe('channel selection by priority', () => {
     const withEmail = resolvePrefs({ criticalEmail: true, channels: { push: true, desktop: true, webPush: true, email: true, inApp: true } });
     expect(decideChannels('CRITICAL', withEmail).channels).toContain('EMAIL');
     expect(decideChannels('CRITICAL', withEmail, { emailEntitled: false }).channels).not.toContain('EMAIL');
-    expect(decideChannels('HIGH', withEmail).channels).not.toContain('EMAIL');
+    expect(decideChannels('HIGH', withEmail).channels).toContain('EMAIL');
+  });
+
+  it('emails the first alert only, plus critical repeats when opted in', () => {
+    const emailOn = resolvePrefs({ channels: { push: true, desktop: true, webPush: true, email: true, inApp: true } });
+    expect(decideChannels('MEDIUM', emailOn).channels).toContain('EMAIL');
+    expect(decideChannels('HIGH', emailOn, { attempt: 1 }).channels).not.toContain('EMAIL');
+    expect(decideChannels('CRITICAL', emailOn, { attempt: 2 }).channels).not.toContain('EMAIL');
+    const repeats = resolvePrefs({ criticalEmail: true, channels: { push: true, desktop: true, webPush: true, email: true, inApp: true } });
+    expect(decideChannels('CRITICAL', repeats, { attempt: 2 }).channels).toContain('EMAIL');
+    expect(decideChannels('LOW', emailOn).channels).not.toContain('EMAIL');
+    expect(decideChannels('HIGH', resolvePrefs({})).channels).not.toContain('EMAIL');
   });
 
   it('low/none are silent in-app items, or digest-only', () => {

@@ -39,7 +39,33 @@ export async function initDesktop(navigate: (href: string) => void): Promise<() 
     listen<string>('remindora://deep-link', (e) => void handleUrl(e.payload)),
     onOpenUrl((urls) => urls.forEach((u) => void handleUrl(u))),
   ]);
+  void enableLaunchAtLoginOnce();
   return () => unlisteners.forEach((u) => u());
+}
+
+const AUTOSTART_INIT_KEY = 'rmd.autostart.initialized';
+
+/** Like other reminder apps, start with the computer by default — once; after that the user's choice sticks. */
+async function enableLaunchAtLoginOnce() {
+  try {
+    if (localStorage.getItem(AUTOSTART_INIT_KEY)) return;
+    await setLaunchAtLogin(true);
+    localStorage.setItem(AUTOSTART_INIT_KEY, '1');
+  } catch {
+    /* autostart unavailable (e.g. sandboxed Linux) */
+  }
+}
+
+export async function launchAtLogin(): Promise<boolean> {
+  if (!isTauri()) return false;
+  const { isEnabled } = await import('@tauri-apps/plugin-autostart');
+  return isEnabled();
+}
+
+export async function setLaunchAtLogin(on: boolean): Promise<void> {
+  if (!isTauri()) return;
+  const { enable, disable } = await import('@tauri-apps/plugin-autostart');
+  await (on ? enable() : disable());
 }
 
 export async function checkForUpdates(): Promise<'none' | 'installed' | 'unsupported'> {

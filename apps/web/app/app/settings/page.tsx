@@ -7,7 +7,7 @@ import { DownloadList } from '@/components/download-list';
 import { Section, SettingRow } from '@/components/settings/section';
 import { api } from '@/lib/api';
 import { APP_VERSION } from '@/lib/config';
-import { checkForUpdates } from '@/lib/desktop';
+import { checkForUpdates, launchAtLogin, setLaunchAtLogin } from '@/lib/desktop';
 import { isTauri } from '@/lib/platform';
 import { keys, reportError, useMe } from '@/lib/queries';
 import { useSession } from '@/lib/session';
@@ -21,6 +21,10 @@ export default function ProfileSettings() {
   const [name, setName] = useState('');
   const zones = useMemo(() => (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['UTC']), []);
   useEffect(() => setName(me?.name ?? ''), [me?.name]);
+  const [autostart, setAutostart] = useState(false);
+  useEffect(() => {
+    if (isTauri()) void launchAtLogin().then(setAutostart).catch(() => undefined);
+  }, []);
 
   async function save(patch: Record<string, unknown>) {
     try {
@@ -100,6 +104,20 @@ export default function ProfileSettings() {
 
       {isTauri() && (
         <Section title="Desktop app" description="Quick Add from anywhere with ⌥⌘Space (macOS) or Alt+Ctrl+Space. Closing the window keeps Remindora in the tray so reminders keep arriving.">
+          <SettingRow label="Open Remindora when my computer starts" hint="Starts quietly in the tray so reminders arrive without opening the app.">
+            <Switch
+              checked={autostart}
+              onCheckedChange={async (v) => {
+                try {
+                  await setLaunchAtLogin(v);
+                  setAutostart(v);
+                } catch (e) {
+                  reportError(e, 'Couldn’t change the startup setting');
+                }
+              }}
+              aria-label="Open at login"
+            />
+          </SettingRow>
           <SettingRow label="Updates">
             <Button size="sm" onClick={async () => { try { const r = await checkForUpdates(); toast(r === 'none' ? 'You’re up to date' : 'Updating…'); } catch (e) { reportError(e, 'Update check failed'); } }}>Check for updates</Button>
           </SettingRow>
