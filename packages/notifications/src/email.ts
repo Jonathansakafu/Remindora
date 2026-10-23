@@ -110,6 +110,33 @@ export const templates = {
       ),
     };
   },
+  verifyEmail(code: string, link: string): EmailMessage & { to: '' } {
+    return {
+      to: '',
+      subject: `${code} — confirm your email for Remindora`,
+      text: `Welcome to Remindora! Your confirmation code is ${code}\n\nOr open this link to confirm:\n${link}\n\nThe code and link expire in 10 minutes. If you didn't create an account, ignore this email.`,
+      html: emailLayout(
+        'Confirm your email',
+        `<p>Welcome to Remindora! Enter this code to finish creating your account:</p>
+<p style="font-size:34px;letter-spacing:.3em;font-weight:700;color:#F5FCFF;margin:18px 0">${code}</p>
+<p>Or <a href="${escape(link)}" style="color:#60E9FF">confirm with one click</a>.</p>
+<p style="color:#7F92B5">Expires in 10 minutes. If you didn’t create an account, ignore this email.</p>`,
+      ),
+    };
+  },
+  passwordReset(link: string): EmailMessage & { to: '' } {
+    return {
+      to: '',
+      subject: 'Reset your Remindora password',
+      text: `Someone (hopefully you) asked to reset your Remindora password.\n\nChoose a new password here:\n${link}\n\nThe link expires in 30 minutes and works once. If you didn't ask for this, ignore this email — your password stays the same.`,
+      html: emailLayout(
+        'Reset your password',
+        `<p>Someone (hopefully you) asked to reset your Remindora password.</p>
+<p><a href="${escape(link)}" style="display:inline-block;background:#60E9FF;color:#06122E;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:600">Choose a new password</a></p>
+<p style="color:#7F92B5">The link expires in 30 minutes and works once. Didn’t ask for this? Ignore this email — your password stays the same.</p>`,
+      ),
+    };
+  },
   reauthCode(code: string): EmailMessage & { to: '' } {
     return {
       to: '',

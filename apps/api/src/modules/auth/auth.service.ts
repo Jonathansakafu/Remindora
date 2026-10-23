@@ -3,10 +3,13 @@ import {
   ACCESS_TOKEN_TTL_SECONDS,
   EMAIL_CHALLENGE_MAX_ATTEMPTS,
   EMAIL_CHALLENGE_TTL_MS,
+  PASSWORD_RESET_TTL_MS,
   REFRESH_TOKEN_TTL_DAYS,
   decryptSecret,
   encryptSecret,
+  hashPassword,
   hmacSha256,
+  passwordProblem,
   randomToken,
   requiresDeviceApproval,
   safeEqual,
@@ -14,6 +17,7 @@ import {
   sha256,
   signAccessToken,
   sixDigitCode,
+  verifyPassword,
 } from '@remindora/auth';
 import type { DevicePlatform, Prisma, User } from '@remindora/database';
 import { createEmailSender, templates, type EmailSender } from '@remindora/notifications';
@@ -33,7 +37,10 @@ export interface RequestMeta {
   userAgent: string | null;
 }
 
-export type LinkMethod = 'EMAIL_CODE' | 'MAGIC_LINK' | 'OAUTH' | 'QR';
+export type LinkMethod = 'EMAIL_CODE' | 'MAGIC_LINK' | 'OAUTH' | 'QR' | 'PASSWORD';
+
+/** Verifying against this keeps unknown-email logins as slow as real ones. */
+const DUMMY_HASH = 'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
 export function toUserDTO(u: User): UserDTO {
   return {
@@ -95,7 +102,7 @@ export class AuthService {
    * Starts an email sign-in. The response never reveals whether the account exists.
    * The requesting device keeps `pollSecret`; only it can redeem the challenge.
    */
-  async startEmail(email: string, device: DeviceInfoInput, meta: RequestMeta, redirectTo?: string) {
+  async startEmail(email: string, device: DeviceInfoInput, meta: RequestMeta, redirectTo?: string, kind: 'sign_in' | 'register' = 'sign_in') {
     await this.limiter.hit(`email-start:e:${sha256(email)}`, 5, 600);
     await this.limiter.hit(`email-start:ip:${meta.ip}`, 20, 600);
 
@@ -123,7 +130,7 @@ export class AuthService {
     });
 
     const link = `${this.env.WEB_URL}/auth/magic?c=${id}&t=${token}`;
-    const msg = templates.signInCode(code, link, device.name);
+    const msg = kind === 'register' ? templates.verifyEmail(code, link) : templates.signInCode(code, link, device.name);
     await this.email.send({ ...msg, to: email });
     await this.audit.log({ action: 'auth.email.start', actorId: user?.id, ip: meta.ip, userAgent: meta.userAgent, targetType: 'email_challenge', targetId: id });
     return { challengeId: id, pollSecret, expiresAt: expiresAt.toISOString() };
@@ -173,7 +180,7 @@ export class AuthService {
 
   private async completeVerification(challengeId: string, method: 'EMAIL_CODE' | 'MAGIC_LINK', meta: RequestMeta, opts: { redeemNow: boolean }) {
     const ch = await this.prisma.emailChallenge.findUniqueOrThrow({ where: { id: challengeId } });
-    const user = ch.userId ? await this.prisma.user.findUniqueOrThrow({ where: { id: ch.userId } }) : await this.createUser(ch.email);
+    const user = ch.userId ? await this.prisma.user.findUniqueOrThrow({ where: { id: ch.userId } }) : await this.createUser(ch.email, await this.pendingRegistration(ch.id));
     const device = ch.deviceInfo as unknown as DeviceInfoInput;
 
     const active = await this.prisma.session.findMany({ where: { userId: user.id, revokedAt: null, expiresAt: { gt: new Date() } }, select: { lastActiveAt: true } });
@@ -243,9 +250,11 @@ export class AuthService {
     return { status: approve ? 'approved' : 'rejected' };
   }
 
-  async createUser(email: string): Promise<User> {
+  async createUser(email: string, profile: { name?: string; passwordHash?: string } = {}): Promise<User> {
     return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({ data: { email, emailVerifiedAt: new Date(), name: null, notificationPref: { create: {} } } });
+      const user = await tx.user.create({
+        data: { email, emailVerifiedAt: new Date(), name: profile.name ?? null, passwordHash: profile.passwordHash ?? null, notificationPref: { create: {} } },
+      });
       const slugBase = email.split('@')[0]!.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30) || 'space';
       const ws = await tx.workspace.create({
         data: { name: 'Personal', slug: `${slugBase}-${user.id.slice(0, 8)}`, isPersonal: true, ownerId: user.id, memberships: { create: { userId: user.id, role: 'OWNER' } } },
@@ -254,6 +263,91 @@ export class AuthService {
       await this.audit.log({ action: 'user.created', actorId: user.id, targetType: 'user', targetId: user.id }, tx);
       return user;
     });
+  }
+
+  // ───────────── Passwords ─────────────
+
+  /**
+   * Starts registration: the account is only created once the emailed code (or link)
+   * is verified, so nobody can claim an address they don't own. Name and password
+   * hash wait in Redis keyed by the challenge.
+   */
+  async register(name: string, email: string, password: string, device: DeviceInfoInput, meta: RequestMeta) {
+    await this.limiter.hit(`register:ip:${meta.ip}`, 10, 3600);
+    const problem = passwordProblem(password, email);
+    if (problem) throw Errors.badRequest(problem, 'weak_password');
+    if (await this.prisma.user.findUnique({ where: { email }, select: { id: true } })) {
+      throw Errors.conflict('An account with this email already exists. Sign in, or reset your password if you forgot it.', undefined, 'account_exists');
+    }
+    const passwordHash = await hashPassword(password);
+    const started = await this.startEmail(email, device, meta, undefined, 'register');
+    await this.redis.client.set(`reg:${started.challengeId}`, JSON.stringify({ name, passwordHash }), 'PX', EMAIL_CHALLENGE_TTL_MS);
+    return started;
+  }
+
+  private async pendingRegistration(challengeId: string): Promise<{ name?: string; passwordHash?: string }> {
+    const raw = await this.redis.client.getdel(`reg:${challengeId}`);
+    return raw ? (JSON.parse(raw) as { name: string; passwordHash: string }) : {};
+  }
+
+  async passwordLogin(email: string, password: string, device: DeviceInfoInput, meta: RequestMeta) {
+    await this.limiter.hit(`pw-login:e:${sha256(email)}`, 10, 900);
+    await this.limiter.hit(`pw-login:ip:${meta.ip}`, 30, 900);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    const ok = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
+    if (!user || !user.passwordHash || !ok || user.deletedAt) {
+      await this.audit.log({ action: 'auth.password.invalid', actorId: user?.id, outcome: 'failure', ip: meta.ip, userAgent: meta.userAgent });
+      throw Errors.unauthorized('Email or password is incorrect', 'invalid_credentials');
+    }
+    return this.issueSession(user, device, 'PASSWORD', meta);
+  }
+
+  /** Always answers the same way so it can't be used to discover accounts. */
+  async forgotPassword(email: string, meta: RequestMeta) {
+    await this.limiter.hit(`pw-forgot:e:${sha256(email)}`, 3, 900);
+    await this.limiter.hit(`pw-forgot:ip:${meta.ip}`, 10, 900);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (user && !user.deletedAt) {
+      const id = randomUUID();
+      const token = randomToken(32);
+      await this.prisma.emailChallenge.create({
+        data: {
+          id,
+          email,
+          userId: user.id,
+          purpose: 'PASSWORD_RESET',
+          codeHash: this.codeHash(id, randomToken(8)),
+          tokenHash: sha256(token),
+          pollSecretHash: sha256(randomToken(24)),
+          deviceInfo: {},
+          ip: meta.ip,
+          expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+        },
+      });
+      await this.email.send({ ...templates.passwordReset(`${this.env.WEB_URL}/reset-password?c=${id}&t=${token}`), to: email });
+      await this.audit.log({ action: 'auth.password.reset_requested', actorId: user.id, ip: meta.ip, userAgent: meta.userAgent, targetType: 'email_challenge', targetId: id });
+    }
+    return { ok: true };
+  }
+
+  /** Sets the new password and signs every device out (whoever had the old one loses access). */
+  async resetPassword(challengeId: string, token: string, password: string, meta: RequestMeta) {
+    await this.limiter.hit(`pw-reset:ip:${meta.ip}`, 20, 900);
+    const ch = await this.prisma.emailChallenge.findUnique({ where: { id: challengeId } });
+    if (!ch || ch.purpose !== 'PASSWORD_RESET' || !ch.userId || !safeEqual(ch.tokenHash, sha256(token))) throw Errors.badRequest('This reset link is invalid', 'invalid_link');
+    if (ch.status !== 'PENDING') throw Errors.gone('This reset link was already used. Request a new one.', 'challenge_used');
+    if (ch.expiresAt.getTime() <= Date.now()) throw Errors.gone('This reset link has expired. Request a new one.', 'challenge_expired');
+    const problem = passwordProblem(password, ch.email);
+    if (problem) throw Errors.badRequest(problem, 'weak_password');
+
+    const passwordHash = await hashPassword(password);
+    const won = await this.prisma.emailChallenge.updateMany({ where: { id: ch.id, status: 'PENDING' }, data: { status: 'CONSUMED', verifiedAt: new Date() } });
+    if (!won.count) throw Errors.gone('This reset link was already used. Request a new one.', 'challenge_used');
+    const sessions = await this.prisma.session.findMany({ where: { userId: ch.userId, revokedAt: null }, select: { id: true } });
+    await this.prisma.user.update({ where: { id: ch.userId }, data: { passwordHash, emailVerifiedAt: new Date() } });
+    for (const s of sessions) await this.revokeSession(s.id, 'password_reset');
+    await this.audit.log({ action: 'auth.password.reset', actorId: ch.userId, ip: meta.ip, userAgent: meta.userAgent, metadata: { sessionsRevoked: sessions.length } });
+    return { ok: true };
   }
 
   // ───────────── Sessions ─────────────

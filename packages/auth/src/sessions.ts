@@ -7,6 +7,7 @@ export const SESSION_IDLE_TIMEOUT_DAYS = 30;
 /** Window in which a sensitive action (device linking) counts as recently re-authenticated. */
 export const REAUTH_WINDOW_SECONDS = 5 * 60;
 export const EMAIL_CHALLENGE_TTL_MS = 10 * 60_000;
+export const PASSWORD_RESET_TTL_MS = 30 * 60_000;
 export const EMAIL_CHALLENGE_MAX_ATTEMPTS = 5;
 
 export interface SessionLike {

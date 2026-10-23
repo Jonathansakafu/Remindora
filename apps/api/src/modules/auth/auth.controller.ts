@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { deviceInfoInput, emailStartInput, isValidTimezone } from '@remindora/types';
+import { deviceInfoInput, emailStartInput, forgotPasswordInput, isValidTimezone, passwordLoginInput, registerInput, resetPasswordInput } from '@remindora/types';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { Auth, Public } from '../../common/auth';
@@ -81,6 +81,47 @@ export class AuthController {
   @ApiZodBody(emailStartInput)
   start(@Body(new ZodPipe(emailStartInput)) body: z.infer<typeof emailStartInput>, @Req() req: Request) {
     return this.auth.startEmail(body.email, body.device, meta(req), body.redirectTo);
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(200)
+  @RateLimit({ limit: 10, windowSeconds: 600, by: 'ip', name: 'register' })
+  @ApiOperation({ summary: 'Create an account: emails a code; finish with /auth/email/verify' })
+  @ApiZodBody(registerInput)
+  register(@Body(new ZodPipe(registerInput)) body: z.infer<typeof registerInput>, @Req() req: Request) {
+    return this.auth.register(body.name, body.email, body.password, body.device, meta(req));
+  }
+
+  @Public()
+  @Post('password/login')
+  @HttpCode(200)
+  @RateLimit({ limit: 30, windowSeconds: 600, by: 'ip', name: 'password-login' })
+  @ApiOperation({ summary: 'Sign in with email and password' })
+  @ApiZodBody(passwordLoginInput)
+  async passwordLogin(@Body(new ZodPipe(passwordLoginInput)) body: z.infer<typeof passwordLoginInput>, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const tokens = await this.auth.passwordLogin(body.email, body.password, body.device, meta(req));
+    return { status: 'signed_in' as const, tokens: this.deliver(res, tokens, body.device.platform) };
+  }
+
+  @Public()
+  @Post('password/forgot')
+  @HttpCode(200)
+  @RateLimit({ limit: 10, windowSeconds: 600, by: 'ip', name: 'password-forgot' })
+  @ApiOperation({ summary: 'Email a password reset link (same answer whether or not the account exists)' })
+  @ApiZodBody(forgotPasswordInput)
+  forgotPassword(@Body(new ZodPipe(forgotPasswordInput)) body: z.infer<typeof forgotPasswordInput>, @Req() req: Request) {
+    return this.auth.forgotPassword(body.email, meta(req));
+  }
+
+  @Public()
+  @Post('password/reset')
+  @HttpCode(200)
+  @RateLimit({ limit: 20, windowSeconds: 600, by: 'ip', name: 'password-reset' })
+  @ApiOperation({ summary: 'Set a new password from a reset link; signs out every device' })
+  @ApiZodBody(resetPasswordInput)
+  resetPassword(@Body(new ZodPipe(resetPasswordInput)) body: z.infer<typeof resetPasswordInput>, @Req() req: Request) {
+    return this.auth.resetPassword(body.challengeId, body.token, body.password, meta(req));
   }
 
   @Public()

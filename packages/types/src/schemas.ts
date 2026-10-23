@@ -170,6 +170,31 @@ export const emailStartInput = z.object({
   redirectTo: z.string().max(500).optional(),
 });
 
+const passwordField = z.string().min(8, 'Use at least 8 characters').max(128);
+
+export const registerInput = z.object({
+  name: z.string().trim().min(1, 'Enter your name').max(80),
+  email: z.email().max(254).transform((e) => e.toLowerCase()),
+  password: passwordField,
+  device: deviceInfoInput,
+});
+
+export const passwordLoginInput = z.object({
+  email: z.email().max(254).transform((e) => e.toLowerCase()),
+  password: z.string().min(1).max(128),
+  device: deviceInfoInput,
+});
+
+export const forgotPasswordInput = z.object({
+  email: z.email().max(254).transform((e) => e.toLowerCase()),
+});
+
+export const resetPasswordInput = z.object({
+  challengeId: z.uuid(),
+  token: z.string().min(20).max(200),
+  password: passwordField,
+});
+
 export const emailVerifyInput = z.object({
   challengeId: z.uuid(),
   code: z.string().regex(/^\d{6}$/).optional(),

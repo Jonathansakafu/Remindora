@@ -21,6 +21,8 @@ model User {
   email                 String    @unique
   emailVerifiedAt       DateTime? @db.Timestamptz(3)
   name                  String?
+  /// scrypt hash (see @remindora/auth password.ts). Null for code-only accounts.
+  passwordHash          String?
   avatarUrl             String?
   timezone              String    @default("UTC")
   locale                String    @default("en-US")
@@ -93,6 +95,7 @@ enum LinkMethod {
   OAUTH
   QR
   SEED
+  PASSWORD
 }
 
 model Device {
@@ -145,6 +148,7 @@ model Session {
 enum ChallengePurpose {
   SIGN_IN
   REAUTH
+  PASSWORD_RESET
 }
 
 enum ChallengeStatus {
