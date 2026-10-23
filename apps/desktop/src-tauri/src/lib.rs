@@ -144,6 +144,16 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Remindora");
+        .build(tauri::generate_context!())
+        .expect("error while building Remindora")
+        .run(|app, event| {
+            // macOS: clicking the Dock icon (or opening the app again) while the window is
+            // hidden in the tray sends Reopen instead of starting a second instance.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                show_main(app);
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
