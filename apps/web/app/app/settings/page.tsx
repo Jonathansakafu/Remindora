@@ -3,8 +3,10 @@ import { Button, Input, Kbd, Segmented, Select, Switch } from '@remindora/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { DownloadList } from '@/components/download-list';
 import { Section, SettingRow } from '@/components/settings/section';
 import { api } from '@/lib/api';
+import { APP_VERSION } from '@/lib/config';
 import { checkForUpdates } from '@/lib/desktop';
 import { isTauri } from '@/lib/platform';
 import { keys, reportError, useMe } from '@/lib/queries';
@@ -75,6 +77,25 @@ export default function ProfileSettings() {
         <SettingRow label="Approve new sign-ins from a signed-in device" hint="New email sign-ins wait for your approval when another device was active in the last 14 days.">
           <Switch checked={me.requireDeviceApproval} onCheckedChange={(v) => save({ requireDeviceApproval: v })} aria-label="Require device approval" />
         </SettingRow>
+        <SettingRow label="Password" hint="We’ll email you a secure link to set a new password. Every device signs out afterwards.">
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                await api('/auth/password/forgot', { body: { email: me.email }, auth: false });
+                toast(`Check ${me.email} for a link to set your password`);
+              } catch (e) {
+                reportError(e, 'Couldn’t send the email');
+              }
+            }}
+          >
+            Set or change password
+          </Button>
+        </SettingRow>
+      </Section>
+
+      <Section title="Download apps" description="Get Remindora on your phone and computer. Your tasks sync automatically.">
+        <DownloadList currentVersion={isTauri() ? APP_VERSION : undefined} compact />
       </Section>
 
       {isTauri() && (
@@ -86,7 +107,7 @@ export default function ProfileSettings() {
       )}
 
       <Section title="About" description="Remindora is built by Jonathan Sakafu." actions={<a href="/about" className="text-sm text-cyan hover:underline">About Remindora →</a>}>
-        <p className="text-sm text-ink-muted">Version 0.1.0</p>
+        <p className="text-sm text-ink-muted">Version {APP_VERSION}</p>
       </Section>
 
       <Section title="Keyboard shortcuts">

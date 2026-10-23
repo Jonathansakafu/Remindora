@@ -1,10 +1,10 @@
 import { aboutApp, creator, GlassPanel, RemindoraMark } from '@remindora/ui';
-import { ArrowLeft, Code2, ExternalLink, Globe, Mail, MessageCircle, Rocket, ShieldCheck } from 'lucide-react';
+import { Code2, HeartHandshake, Target, ExternalLink, Globe, Mail, MessageCircle, Rocket, ShieldCheck } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '@/components/brand-icons';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { SiteShell } from '@/components/marketing/site-shell';
 
-export const metadata: Metadata = { title: 'About', description: `${aboutApp.name} is built by ${creator.name}, ${creator.role}.` };
+export const metadata: Metadata = { title: 'About us', description: `${aboutApp.name} is built by ${creator.name}, ${creator.role}.` };
 
 const HIGHLIGHT_ICONS = [Code2, Rocket, ShieldCheck];
 
@@ -18,19 +18,29 @@ export default function AboutPage() {
     { icon: Globe, label: 'Portfolio', value: 'View portfolio', href: c.portfolio },
   ];
   return (
-    <main id="main" className="relative min-h-dvh overflow-hidden px-4 py-10 md:py-16">
+    <SiteShell>
+    <div className="relative overflow-hidden px-4 py-10 md:py-16">
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-15%] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgb(165_140_255/0.14),transparent_62%)]" />
       <div className="relative mx-auto max-w-4xl">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
-          <ArrowLeft size={15} /> Back to Remindora
-        </Link>
-
-        <section aria-labelledby="about-app" className="mt-8 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+        <section aria-labelledby="about-app" className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
           <RemindoraMark size={72} />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan">About</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan">About us</p>
             <h1 id="about-app" className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{aboutApp.name}</h1>
             <p className="mt-2 max-w-2xl text-ink-muted">{aboutApp.summary}</p>
+          </div>
+        </section>
+
+        <section aria-label="Mission and values" className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-bg-elevated/50 p-6">
+            <Target size={20} className="text-cyan" />
+            <h2 className="mt-3 font-display text-lg font-semibold">Our mission</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">Help people remember what matters and act on it at the right moment — without drowning them in notifications.</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-bg-elevated/50 p-6">
+            <HeartHandshake size={20} className="text-violet" />
+            <h2 className="mt-3 font-display text-lg font-semibold">What we value</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">Respect for your attention, your privacy and your time. Your data is yours, every device is under your control, and the free plan stays free.</p>
           </div>
         </section>
 
@@ -105,9 +115,8 @@ export default function AboutPage() {
             ))}
           </ul>
         </section>
-
-        <footer className="mt-14 border-t border-line pt-6 text-sm text-ink-faint">© {new Date().getFullYear()} {creator.name}. {aboutApp.name}.</footer>
       </div>
-    </main>
+    </div>
+    </SiteShell>
   );
 }

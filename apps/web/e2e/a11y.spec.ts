@@ -24,6 +24,16 @@ test('about page has no serious accessibility violations', async ({ page }) => {
   expect(await audit(page, '/about')).toEqual([]);
 });
 
+test('public pages have no serious accessibility violations', async ({ page }) => {
+  const found: string[] = [];
+  for (const path of ['/', '/services', '/register', '/forgot-password', '/reset-password?c=00000000-0000-4000-8000-000000000000&t=abcdefghijklmnopqrstuvwxyz']) {
+    await page.goto(path);
+    await page.getByRole('heading', { level: 1 }).first().waitFor();
+    found.push(...(await audit(page, path)));
+  }
+  expect(found).toEqual([]);
+});
+
 test('main screens have no serious accessibility violations', async ({ page }) => {
   test.setTimeout(180_000);
   await signIn(page, uniqueEmail('a11y'));

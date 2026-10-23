@@ -11,7 +11,7 @@ const apiWs = api.replace(/^http/, 'ws');
 
 const csp = [
   "default-src 'self'",
-  `connect-src 'self' ${api} ${apiWs}`,
+  `connect-src 'self' ${api} ${apiWs} https://api.github.com`,
   "img-src 'self' data: blob: https:",
   "style-src 'self' 'unsafe-inline'",
   "script-src 'self' 'unsafe-inline'" + (process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''),
