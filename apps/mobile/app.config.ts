@@ -38,7 +38,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
-    ['expo-build-properties', { android: { usesCleartextTraffic: insecureApi } }],
+    [
+      'expo-build-properties',
+      {
+        android: {
+          usesCleartextTraffic: insecureApi,
+          // R8 strips Room's generated database classes, so WorkManager (used by notifications
+          // and the widget) crashes at launch with "Failed to create an instance of WorkDatabase".
+          extraProguardRules: ['-keep class * extends androidx.room.RoomDatabase { <init>(); }', '-keep class androidx.work.impl.** { *; }'].join('\n'),
+        },
+      },
+    ],
     'expo-secure-store',
     ['expo-splash-screen', { backgroundColor: '#070D22', image: './assets/images/splash-icon.png', imageWidth: 120 }],
     ['expo-notifications', { icon: './assets/images/notification-icon.png', color: '#60E9FF', defaultChannel: 'remindora-default' }],
