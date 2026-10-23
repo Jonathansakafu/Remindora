@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line px-3 md:px-5">
+        <header className="flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-b border-line px-3 pt-[env(safe-area-inset-top)] md:px-5">
           <button type="button" className="rounded-lg p-2 text-ink-muted hover:bg-white/5 md:hidden" onClick={() => ui.setMobileNav(true)} aria-label="Open navigation">
             <MenuIcon size={19} />
           </button>
@@ -193,7 +193,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Sheet>
       )}
       <Sheet open={ui.mobileNavOpen} onOpenChange={ui.setMobileNav} title="Navigation" side="left">
-        <div className="h-full p-3">
+        <div className="h-full p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
           <Suspense>
             <Sidebar onNavigate={() => ui.setMobileNav(false)} />
           </Suspense>
