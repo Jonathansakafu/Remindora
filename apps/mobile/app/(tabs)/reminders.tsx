@@ -7,7 +7,8 @@ import { ActivityIndicator, Alert, Pressable, SectionList, Text, View } from 're
 import { Screen } from '../../src/components/ui';
 import { api } from '../../src/lib/api';
 import { useTabBarSpace } from '../../src/lib/layout';
-import { refetchTasks, useComplete, useTasks } from '../../src/lib/queries';
+import { OrbitHero } from '../../src/components/OrbitHero';
+import { refetchTasks, useComplete, useHabits, useTasks } from '../../src/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../src/lib/session';
 import { colors } from '../../src/lib/theme';
@@ -66,6 +67,7 @@ export default function Reminders() {
   const tz = useSession((s) => s.user?.timezone ?? 'UTC');
   const tabSpace = useTabBarSpace();
   const { data: tasks = [], isLoading, refetch, isRefetching } = useTasks({ view: 'reminders' });
+  const { data: checklist = [] } = useHabits();
 
   const sections = useMemo(() => {
     const now = DateTime.now().setZone(tz);
@@ -76,6 +78,20 @@ export default function Reminders() {
     }
     return [...map.entries()].map(([title, data]) => ({ title, data }));
   }, [tasks, tz]);
+
+  const hero = useMemo(() => {
+    const now = DateTime.now().setZone(tz);
+    const open = tasks.filter((t) => t.dueAt && !t.completedAt);
+    const next = open.map((t) => ({ t, d: DateTime.fromISO(t.dueAt!).setZone(tz) })).find((x) => x.d >= now);
+    const today = now.toISODate()!;
+    const list = checklist.filter((h) => !h.archived);
+    return {
+      remindersToday: open.filter((t) => DateTime.fromISO(t.dueAt!).setZone(tz).hasSame(now, 'day')).length,
+      checklistDone: list.filter((h) => h.checkIns.includes(today)).length,
+      checklistTotal: list.length,
+      nextLabel: next ? `${next.d.toFormat(next.d.hasSame(now, 'day') ? 'HH:mm' : 'ccc HH:mm')} · ${next.t.title}` : null,
+    };
+  }, [tasks, checklist, tz]);
 
   return (
     <Screen title="Reminders" subtitle="They ring like an alarm at the time you set">
@@ -95,6 +111,7 @@ export default function Reminders() {
           onRefresh={refetch}
           refreshing={isRefetching}
           contentContainerStyle={{ paddingBottom: tabSpace + 32 }}
+          ListHeaderComponent={<OrbitHero {...hero} />}
           renderSectionHeader={({ section }) => (
             <Text style={{ color: section.title === 'Missed' ? colors.danger : colors.textFaint, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', marginHorizontal: 20, marginTop: 14, marginBottom: 8 }}>{section.title}</Text>
           )}

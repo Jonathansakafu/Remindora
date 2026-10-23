@@ -11,6 +11,9 @@ import { api } from './api';
  * per channel in system settings and Android enforces it. Only "Critical" asks to
  * bypass Do Not Disturb, and only if the user grants notification-policy access.
  */
+/** Set once the user has been through the "Set up alarms" permission screen on this phone. */
+export const PERMISSIONS_DONE_KEY = 'remindora.permissionsDone';
+
 const IMPORTANCE = {
   MAX: Notifications.AndroidImportance.MAX,
   HIGH: Notifications.AndroidImportance.HIGH,

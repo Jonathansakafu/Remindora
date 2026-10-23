@@ -5,6 +5,7 @@ import { alarmSoundLabel } from '@remindora/core';
 import { AlarmClock, Bell, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useMemo } from 'react';
+import { OrbitSummary } from '@/components/orbit/orbit-summary';
 import { useCompleteTask, useDeleteTask, useTasks } from '@/lib/queries';
 import { repeatLabel, useReminderForm } from '@/lib/reminder-form';
 import { useSession } from '@/lib/session';
@@ -91,6 +92,10 @@ export default function RemindersPage() {
         <Button variant="primary" size="lg" onClick={() => open()}>
           <Plus size={19} /> New reminder
         </Button>
+      </div>
+
+      <div className="mb-6">
+        <OrbitSummary />
       </div>
 
       {isLoading ? (

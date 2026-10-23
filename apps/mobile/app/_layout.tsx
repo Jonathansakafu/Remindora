@@ -11,7 +11,7 @@ import { AppState, Pressable, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { authenticate, loadLockPreference, useLock } from '../src/lib/biometric';
 import { flushOutbox, watchConnectivity } from '../src/lib/offline';
-import { handleResponse, registerForPush, setupChannelsAndActions } from '../src/lib/push';
+import { handleResponse, PERMISSIONS_DONE_KEY, registerForPush, setupChannelsAndActions } from '../src/lib/push';
 import { useAlarm } from '../src/lib/alarm';
 import { refetchTasks } from '../src/lib/queries';
 import { connectRealtime, disconnectRealtime } from '../src/lib/realtime';
@@ -78,6 +78,10 @@ export default function RootLayout() {
     connectRealtime(queryClient);
     void registerForPush().catch(() => undefined);
     void adoptDeviceTimezone();
+    // First sign-in on this phone: walk through notification / alarm permissions once.
+    void AsyncStorage.getItem(PERMISSIONS_DONE_KEY).then((done) => {
+      if (!done) setTimeout(() => router.push('/permissions'), 600);
+    });
     return () => disconnectRealtime();
   }, [status, sessionId]);
 
@@ -115,6 +119,7 @@ export default function RootLayout() {
           <Stack.Screen name="link" options={{ presentation: 'modal' }} />
           <Stack.Screen name="task" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="reminder-form" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="permissions" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="alarm" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
         </Stack>
         <LockOverlay />

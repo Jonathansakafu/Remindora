@@ -23,6 +23,11 @@ test('links a second device with approval and syncs changes in real time', async
   const laptop = await (await browser.newContext()).newPage();
   const phone = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
   await signIn(laptop, email);
+  // Approval of new sign-ins is opt-in.
+  await laptop.goto('/app/settings');
+  await laptop.getByRole('switch', { name: 'Require device approval' }).click();
+  await expect(laptop.getByRole('switch', { name: 'Require device approval' })).toBeChecked();
+  await laptop.goto('/app/reminders');
 
   // Second device: sensitive sign-in waits for approval on the first.
   await startSignIn(phone, email);
@@ -82,8 +87,6 @@ test('acknowledging a reminder on one device dismisses it on the other', async (
   const a = await (await browser.newContext()).newPage();
   const b = await (await browser.newContext()).newPage();
   await signIn(a, email);
-  await a.goto('/app/settings');
-  await a.getByRole('switch', { name: 'Require device approval' }).click();
   await signIn(b, email);
 
   await a.goto('/app/today');

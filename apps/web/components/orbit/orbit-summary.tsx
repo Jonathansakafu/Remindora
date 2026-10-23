@@ -66,9 +66,9 @@ export function OrbitSummary({ tall }: { tall?: boolean }) {
   const progress = completedToday + open ? completedToday / (completedToday + open) : 0;
   const habitsDone = habits.filter((h) => h.checkIns.includes(todayKey!)).length;
   const metrics: OrbitMetric[] = [
-    { label: 'Today', display: `${open} open`, value: Math.min(1, open / 10), color: 'var(--color-cyan)', href: '/app/today' },
+    { label: 'Reminders', display: `${open} today`, value: Math.min(1, open / 10), color: 'var(--color-cyan)', href: '/app/reminders' },
     { label: 'Focus', display: `${focus?.todayMinutes ?? 0} min`, value: Math.min(1, (focus?.todayMinutes ?? 0) / 120), color: 'var(--color-success)', href: '/app/focus' },
-    { label: 'Habits', display: `${habitsDone}/${habits.length}`, value: habits.length ? habitsDone / habits.length : 0, color: 'var(--color-amber)', href: '/app/habits' },
+    { label: 'Checklist', display: `${habitsDone}/${habits.length}`, value: habits.length ? habitsDone / habits.length : 0, color: 'var(--color-amber)', href: '/app/checklist' },
     { label: 'Progress', display: `${Math.round(progress * 100)}% done`, value: progress, color: 'var(--color-violet)', href: '/app/analytics' },
   ];
   const use3d = show3d && !reduced && webgl;

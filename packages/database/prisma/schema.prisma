@@ -28,8 +28,8 @@ model User {
   locale                String    @default("en-US")
   weekStartsOn          Int       @default(1)
   theme                 String    @default("observatory")
-  /// New email sign-ins need approval from a signed-in device (when one was active recently).
-  requireDeviceApproval Boolean   @default(true)
+  /// Opt-in: new email sign-ins also need approval from a signed-in device (when one was active recently).
+  requireDeviceApproval Boolean   @default(false)
   isAdmin               Boolean   @default(false)
   createdAt             DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt             DateTime  @updatedAt @db.Timestamptz(3)

@@ -23,7 +23,7 @@ export default function Login() {
       const r = await api<{ status: string; tokens?: AuthTokensDTO }>(`/auth/email/challenges/${step.challengeId}/poll`, { body: { pollSecret: step.pollSecret }, auth: false }).catch(() => null);
       if (r?.status === 'signed_in' && r.tokens) await accept(r.tokens);
       if (r?.status === 'rejected' || r?.status === 'expired') {
-        setError(r.status === 'rejected' ? 'The sign-in was declined on your other device.' : 'That code expired.');
+        setError(r.status === 'rejected' ? 'The sign-in was declined on your other device.' : 'That sign-in request expired. Please request a new code.');
         setStep({ kind: 'email' });
       }
     }, 2500);
@@ -100,8 +100,9 @@ export default function Login() {
           {step.kind === 'approval' && (
             <View style={{ gap: 10 }}>
               <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600' }}>Approve on your other device</Text>
-              <Text style={{ color: colors.textMuted }}>For your security, open Remindora on a device that’s already signed in and tap Approve.</Text>
+              <Text style={{ color: colors.textMuted }}>You turned on “Approve new sign-ins”. Open Remindora on your computer (or another signed-in device) and tap Approve at the top of the screen.</Text>
               <ActivityIndicator color={colors.cyan} style={{ marginTop: 8 }} />
+              <Button label="Cancel" variant="ghost" onPress={() => setStep({ kind: 'email' })} />
             </View>
           )}
           {error ? <Text accessibilityRole="alert" style={{ color: colors.danger, marginTop: 12 }}>{error}</Text> : null}

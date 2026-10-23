@@ -3,6 +3,7 @@ import { Button } from '@remindora/ui';
 import { BellRing, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { unlockAlarmSound } from '@/lib/alarm';
 import { enableDeviceNotifications, notificationPermission, syncWebPush } from '@/lib/device-notifications';
 import { isTauri } from '@/lib/platform';
 import { reportError } from '@/lib/queries';
@@ -46,6 +47,7 @@ export function NotificationPrompt() {
 
   async function enable() {
     setBusy(true);
+    unlockAlarmSound(); // this click also lets the alarm ring with sound later
     try {
       const result = await enableDeviceNotifications();
       if (result === 'granted') toast.success(isTauri() ? 'Desktop notifications are on' : 'Notifications are on for this browser');
