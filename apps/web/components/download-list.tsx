@@ -76,7 +76,7 @@ export function DownloadList({ currentVersion, compact }: { currentVersion?: str
         <a href={RELEASES_URL} className="underline underline-offset-4 hover:text-ink">
           GitHub
         </a>
-        . First launch on Mac: right-click → Open. On Windows: More info → Run anyway.
+        . Mac shows a security warning the first time: click Done, then System Settings → Privacy & Security → Open Anyway. On Windows: More info → Run anyway. Intel Macs need the Intel version.
       </p>
     </div>
   );
