@@ -9,8 +9,10 @@ const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk', 
 export const metadata: Metadata = {
   title: { default: 'Remindora', template: '%s · Remindora' },
   description: 'Capture, plan and focus — tasks, calendar, habits and priority reminders on every device.',
-  icons: { icon: '/icon.svg' },
+  icons: { icon: '/icon.svg', apple: '/apple-touch-icon.png' },
   manifest: '/manifest.webmanifest',
+  // iPhone/iPad: "Add to Home Screen" installs a full-screen app that can receive push (iOS 16.4+).
+  appleWebApp: { capable: true, title: 'Remindora', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport: Viewport = { themeColor: '#070D22', width: 'device-width', initialScale: 1, viewportFit: 'cover' };

@@ -26,7 +26,7 @@ test('about page has no serious accessibility violations', async ({ page }) => {
 
 test('public pages have no serious accessibility violations', async ({ page }) => {
   const found: string[] = [];
-  for (const path of ['/', '/services', '/register', '/forgot-password', '/reset-password?c=00000000-0000-4000-8000-000000000000&t=abcdefghijklmnopqrstuvwxyz']) {
+  for (const path of ['/', '/services', '/ios', '/register', '/forgot-password', '/reset-password?c=00000000-0000-4000-8000-000000000000&t=abcdefghijklmnopqrstuvwxyz']) {
     await page.goto(path);
     await page.getByRole('heading', { level: 1 }).first().waitFor();
     found.push(...(await audit(page, path)));

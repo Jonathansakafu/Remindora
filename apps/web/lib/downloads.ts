@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 export const RELEASES_URL = 'https://github.com/Jonathansakafu/Remindora/releases/latest';
 const LATEST_API = 'https://api.github.com/repos/Jonathansakafu/Remindora/releases/latest';
 
-export type DownloadPlatform = 'android' | 'windows' | 'macos-arm' | 'macos-intel' | 'linux';
+export type DownloadPlatform = 'android' | 'ios' | 'windows' | 'macos-arm' | 'macos-intel' | 'linux';
 
 export interface Download {
   platform: DownloadPlatform;
@@ -29,12 +29,16 @@ const PLATFORMS: Array<{ platform: DownloadPlatform; label: string; detail: stri
   { platform: 'linux', label: 'Linux', detail: 'AppImage · x86_64', match: /\.AppImage$/i },
 ];
 
+/** iPhone/iPad install the website itself (Safari → Add to Home Screen); no App Store build yet. */
+const IOS: Download = { platform: 'ios', label: 'iPhone & iPad', detail: 'Free · Add to Home Screen', url: '/ios', size: null };
+
 /** Used when GitHub can't be reached: every platform still gets a working link. */
 export const FALLBACK: LatestRelease = {
   version: '',
   publishedAt: null,
   downloads: [
     { platform: 'android', label: 'Android', detail: 'APK · Android 8+', url: `${RELEASES_URL}/download/Remindora.apk`, size: null },
+    IOS,
     ...PLATFORMS.slice(1).map((p) => ({ platform: p.platform, label: p.label, detail: p.detail, url: RELEASES_URL, size: null })),
   ],
 };
@@ -48,6 +52,7 @@ export async function fetchLatestRelease(signal?: AbortSignal): Promise<LatestRe
     const asset = body.assets.find((a) => p.match.test(a.name));
     downloads.push(asset ? { platform: p.platform, label: p.label, detail: p.detail, url: asset.browser_download_url, size: asset.size } : { platform: p.platform, label: p.label, detail: 'Coming soon', url: RELEASES_URL, size: null });
   }
+  downloads.splice(1, 0, IOS);
   return { version: body.tag_name.replace(/^v/, ''), publishedAt: body.published_at, downloads };
 }
 
@@ -71,6 +76,7 @@ export function detectPlatform(): DownloadPlatform | null {
   if (typeof navigator === 'undefined') return null;
   const ua = navigator.userAgent;
   if (/Android/i.test(ua)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
   if (/Windows/i.test(ua)) return 'windows';
   if (/Mac OS X/i.test(ua)) return 'macos-arm';
   if (/Linux/i.test(ua)) return 'linux';

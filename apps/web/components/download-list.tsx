@@ -4,7 +4,7 @@ import { Apple, Download, Monitor, Smartphone, Terminal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { detectPlatform, formatSize, RELEASES_URL, useLatestRelease, type DownloadPlatform } from '@/lib/downloads';
 
-const ICONS: Record<DownloadPlatform, typeof Download> = { android: Smartphone, windows: Monitor, 'macos-arm': Apple, 'macos-intel': Apple, linux: Terminal };
+const ICONS: Record<DownloadPlatform, typeof Download> = { android: Smartphone, ios: Smartphone, windows: Monitor, 'macos-arm': Apple, 'macos-intel': Apple, linux: Terminal };
 
 /** Latest installers from the GitHub release, with the visitor's platform first. */
 export function DownloadList({ currentVersion, compact }: { currentVersion?: string; compact?: boolean }) {
