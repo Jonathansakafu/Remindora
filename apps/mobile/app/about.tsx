@@ -4,8 +4,10 @@ import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { Glass, Screen, SectionLabel } from '../src/components/ui';
 import { colors } from '../src/lib/theme';
+import { useSystemBottom } from '../src/lib/layout';
 
 export default function About() {
+  const systemBottom = useSystemBottom();
   const c = creator.contact;
   const channels = [
     { label: 'Email', value: c.email, url: `mailto:${c.email}` },
@@ -16,7 +18,7 @@ export default function About() {
   ];
   return (
     <Screen title="About" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 + systemBottom }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Image source={require('../assets/images/icon.png')} style={{ width: 60, height: 60, borderRadius: 14 }} accessible={false} />
           <View style={{ flex: 1 }}>

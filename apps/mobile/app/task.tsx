@@ -10,6 +10,7 @@ import { api } from '../src/lib/api';
 import { patchTask, refetchTasks, showError, useComplete, useTask, useUpdate } from '../src/lib/queries';
 import { useSession } from '../src/lib/session';
 import { colors } from '../src/lib/theme';
+import { useSystemBottom } from '../src/lib/layout';
 
 const PRIORITIES = ['NONE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 
@@ -21,6 +22,7 @@ export default function TaskScreen() {
 }
 
 function TaskBody({ task }: { task: TaskDTO }) {
+  const systemBottom = useSystemBottom();
   const tz = useSession((s) => s.user?.timezone ?? 'UTC');
   const update = useUpdate();
   const complete = useComplete();
@@ -44,7 +46,7 @@ function TaskBody({ task }: { task: TaskDTO }) {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 + systemBottom }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
           <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={10}><Text style={{ color: colors.cyan, fontSize: 16 }}>Close</Text></Pressable>
           <Pressable

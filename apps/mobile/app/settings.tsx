@@ -9,8 +9,10 @@ import { biometricsAvailable, enrollBiometricReauth, setAppLock, useLock } from 
 import { openBatterySettings, openChannelSettings, openDndAccessSettings, registerForPush } from '../src/lib/push';
 import { useSession } from '../src/lib/session';
 import { colors } from '../src/lib/theme';
+import { useSystemBottom } from '../src/lib/layout';
 
 export default function Settings() {
+  const systemBottom = useSystemBottom();
   const user = useSession((s) => s.user);
   const lock = useLock();
   const [perm, setPerm] = useState<string>('unknown');
@@ -22,7 +24,7 @@ export default function Settings() {
 
   return (
     <Screen title="Settings" right={<Pressable onPress={() => router.back()} accessibilityRole="button"><Text style={{ color: colors.cyan }}>Done</Text></Pressable>}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 4, paddingBottom: 60 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 4, paddingBottom: 60 + systemBottom }}>
         <SectionLabel>Notifications</SectionLabel>
         <Glass>
           <Text style={{ color: colors.text }}>Permission: {perm}</Text>

@@ -10,8 +10,10 @@ import { colors } from '../lib/theme';
 import { QuickAddBar } from './QuickAddBar';
 import { TaskRow } from './TaskRow';
 import { Empty, SectionLabel } from './ui';
+import { useTabBarSpace } from '../lib/layout';
 
 export function TaskList({ view, emptyTitle, group = true }: { view: string; emptyTitle: string; group?: boolean }) {
+  const tabSpace = useTabBarSpace();
   const { data = [], isFetching, refetch } = useTasks({ view });
   const tz = useSession((s) => s.user?.timezone ?? 'UTC');
   const { online, pending } = useSync();
@@ -40,7 +42,7 @@ export function TaskList({ view, emptyTitle, group = true }: { view: string; emp
         renderSectionHeader={({ section }) => (section.title ? <SectionLabel color={section.title === 'Overdue' ? colors.danger : colors.cyan}>{section.title}</SectionLabel> : null)}
         ListEmptyComponent={<Empty title={emptyTitle} />}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => (void refetch(), void qc.invalidateQueries({ queryKey: ['notifications'] }))} tintColor={colors.cyan} />}
-        contentContainerStyle={{ paddingBottom: 96 }}
+        contentContainerStyle={{ paddingBottom: tabSpace + 32 }}
         stickySectionHeadersEnabled={false}
       />
     </View>

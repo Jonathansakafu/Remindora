@@ -8,6 +8,7 @@ import { Empty, Screen } from '../../src/components/ui';
 import { api } from '../../src/lib/api';
 import { useSession } from '../../src/lib/session';
 import { colors } from '../../src/lib/theme';
+import { useTabBarSpace } from '../../src/lib/layout';
 
 interface CalData {
   tasks: TaskDTO[];
@@ -15,6 +16,7 @@ interface CalData {
 }
 
 export default function Calendar() {
+  const tabSpace = useTabBarSpace();
   const tz = useSession((s) => s.user?.timezone ?? 'UTC');
   const today = DateTime.now().setZone(tz).startOf('day');
   const [selected, setSelected] = useState(today);
@@ -47,7 +49,7 @@ export default function Calendar() {
           <Text style={{ color: colors.textMuted, fontSize: 12 }}>{e.allDay ? 'All day' : `${DateTime.fromISO(e.startAt).setZone(tz).toFormat('HH:mm')}–${DateTime.fromISO(e.endAt).setZone(tz).toFormat('HH:mm')}`}</Text>
         </View>
       ))}
-      <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={({ item }) => <TaskRow task={item} />} ListEmptyComponent={events.length ? undefined : <Empty title="Nothing scheduled" />} contentContainerStyle={{ paddingBottom: 96 }} />
+      <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={({ item }) => <TaskRow task={item} />} ListEmptyComponent={events.length ? undefined : <Empty title="Nothing scheduled" />} contentContainerStyle={{ paddingBottom: tabSpace + 32 }} />
     </Screen>
   );
 }

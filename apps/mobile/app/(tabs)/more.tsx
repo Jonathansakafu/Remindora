@@ -5,6 +5,7 @@ import { api } from '../../src/lib/api';
 import { useNotifications } from '../../src/lib/queries';
 import { useSession } from '../../src/lib/session';
 import { colors } from '../../src/lib/theme';
+import { useTabBarSpace } from '../../src/lib/layout';
 
 function Row({ label, href, badge, onPress }: { label: string; href?: Href; badge?: number; onPress?: () => void }) {
   return (
@@ -17,11 +18,12 @@ function Row({ label, href, badge, onPress }: { label: string; href?: Href; badg
 }
 
 export default function More() {
+  const tabSpace = useTabBarSpace();
   const user = useSession((s) => s.user);
   const { data } = useNotifications();
   return (
     <Screen title="More" subtitle={user?.email}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabSpace + 36 }}>
         <Glass>
           <Row label="Notifications" href="/notifications" badge={data?.unread} />
           <Row label="Upcoming" href="/upcoming" />
