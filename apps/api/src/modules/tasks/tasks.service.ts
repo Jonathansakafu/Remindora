@@ -262,6 +262,21 @@ export class TasksService {
     return dto;
   }
 
+  /** Swaps the task-level reminder times for a new set (subtask reminders are untouched). */
+  private async replaceReminders(userId: string, taskId: string, reminders: NonNullable<UpdateTaskInput['reminders']>) {
+    const myEnt = await this.entitlements.forUser(userId);
+    await this.entitlements.assertLimit(myEnt, 'remindersPerTask.max', 0, reminders.length);
+    const task = await this.prisma.task.findUniqueOrThrow({ where: { id: taskId }, select: { assigneeId: true, creatorId: true } });
+    const recipient = task.assigneeId ?? task.creatorId;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.reminder.deleteMany({ where: { taskId, subtaskId: null } });
+      for (const r of reminders) {
+        await tx.reminder.create({ data: { taskId, userId: recipient, offsetMinutes: r.at ? null : (r.offsetMinutes ?? 0), at: r.at ? new Date(r.at) : null, constant: r.constant ?? false } });
+      }
+    });
+    await this.scheduler.rescheduleTask(taskId);
+  }
+
   /**
    * Defaults so reminders work without manual setup: a task with a time is reminded at
    * that time (any priority); an all-day task only when it's high priority or above.
@@ -349,8 +364,13 @@ export class TasksService {
   async update(ctx: Ctx, id: string, input: UpdateTaskInput): Promise<TaskDTO> {
     const { userId } = ctx;
     const { task } = await this.access.task(userId, id, 'task.update');
-    const { baseVersion, force, ...patch } = input;
-    if (Object.keys(patch).length === 0) return this.load(userId, id);
+    const { baseVersion, force, reminders: newReminders, ...patch } = input;
+    if (newReminders) await this.replaceReminders(userId, id, newReminders);
+    if (Object.keys(patch).length === 0) {
+      const dto = await this.load(userId, id);
+      if (newReminders) this.broadcast(dto, ctx.sessionId);
+      return dto;
+    }
 
     if (patch.status === 'DONE' && !task.completedAt) {
       const rest = { ...patch };

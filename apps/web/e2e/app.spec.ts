@@ -139,3 +139,18 @@ test('daily checklist ticks items for today', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: 'Drink water' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByText('1 of 2 done')).toBeVisible();
 });
+
+test('reminder form adds early reminders and the list shows a countdown', async ({ page }) => {
+  await signIn(page, uniqueEmail('early'));
+  const due = new Date(Date.now() + 26 * 3_600_000); // tomorrow, ~26 h ahead (UTC in tests)
+  await page.getByRole('button', { name: 'New reminder' }).first().click();
+  await page.getByLabel('What should I remind you about?').fill('Doctor appointment');
+  await page.getByLabel('Date').fill(due.toISOString().slice(0, 10));
+  await page.getByLabel('Time').fill(due.toISOString().slice(11, 16));
+  await page.getByRole('checkbox', { name: '1 hour early' }).click();
+  await expect(page.getByRole('checkbox', { name: /1 hour early/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('button', { name: 'Set reminder' }).click();
+  const row = page.getByRole('listitem').filter({ hasText: 'Doctor appointment' });
+  await expect(row).toContainText('also 1 hour early');
+  await expect(row).toContainText(/in 1 day/);
+});

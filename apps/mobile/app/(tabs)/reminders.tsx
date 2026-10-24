@@ -1,8 +1,8 @@
-import { repeatLabel } from '@remindora/core';
+import { countdownLabel, offsetLabel, repeatLabel } from '@remindora/core';
 import type { TaskDTO } from '@remindora/types';
 import { router } from 'expo-router';
 import { DateTime } from 'luxon';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, SectionList, Text, View } from 'react-native';
 import { Screen } from '../../src/components/ui';
 import { api } from '../../src/lib/api';
@@ -20,11 +20,12 @@ function groupLabel(d: DateTime, now: DateTime) {
   return d.toFormat('cccc d LLLL');
 }
 
-function Row({ task, tz, missed }: { task: TaskDTO; tz: string; missed: boolean }) {
+function Row({ task, tz, missed, now }: { task: TaskDTO; tz: string; missed: boolean; now: Date }) {
   const complete = useComplete();
   const qc = useQueryClient();
   const due = DateTime.fromISO(task.dueAt!).setZone(tz);
   const repeat = repeatLabel(task.recurrence?.rrule);
+  const early = task.reminders.filter((r) => !r.subtaskId && (r.offsetMinutes ?? 0) > 0).map((r) => offsetLabel(r.offsetMinutes!));
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/reminder-form', params: { id: task.id } })}
@@ -41,13 +42,14 @@ function Row({ task, tz, missed }: { task: TaskDTO; tz: string; missed: boolean 
       <View style={{ width: 70, alignItems: 'center' }}>
         <Text style={{ color: missed ? colors.danger : colors.text, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{due.toFormat('HH:mm')}</Text>
         <Text style={{ color: colors.textFaint, fontSize: 12 }}>{due.toFormat('ccc d LLL')}</Text>
+        <Text style={{ color: missed ? colors.danger : colors.cyan, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{countdownLabel(due.toJSDate(), now)}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }} numberOfLines={2}>
           {task.title}
         </Text>
         <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }} numberOfLines={1}>
-          {[missed ? 'Missed' : null, repeat ? `↻ ${repeat}` : null, task.description].filter(Boolean).join('  ·  ')}
+          {[missed ? 'Missed' : null, repeat ? `↻ ${repeat}` : null, early.length ? `🔔 also ${early.join(', ')}` : null, task.description].filter(Boolean).join('  ·  ')}
         </Text>
       </View>
       <Pressable
@@ -68,6 +70,12 @@ export default function Reminders() {
   const tabSpace = useTabBarSpace();
   const { data: tasks = [], isLoading, refetch, isRefetching } = useTasks({ view: 'reminders' });
   const { data: checklist = [] } = useHabits();
+  // Countdowns tick every 30 seconds.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const sections = useMemo(() => {
     const now = DateTime.now().setZone(tz);
@@ -115,7 +123,7 @@ export default function Reminders() {
           renderSectionHeader={({ section }) => (
             <Text style={{ color: section.title === 'Missed' ? colors.danger : colors.textFaint, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', marginHorizontal: 20, marginTop: 14, marginBottom: 8 }}>{section.title}</Text>
           )}
-          renderItem={({ item, section }) => <Row task={item} tz={tz} missed={section.title === 'Missed'} />}
+          renderItem={({ item, section }) => <Row task={item} tz={tz} missed={section.title === 'Missed'} now={now} />}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', padding: 40 }}>
               <Text style={{ fontSize: 44 }}>⏰</Text>

@@ -19,7 +19,7 @@ export function DialogContent({ title, description, children, className, hideTit
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#030719]/70 backdrop-blur-sm animate-fade" />
       <DialogPrimitive.Content
-        className={cn('glass-strong fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-32px)] max-w-lg -translate-x-1/2 rounded-[22px] p-5 animate-rise focus:outline-none', className)}
+        className={cn('glass-strong scroll-thin fixed left-1/2 top-[max(8vh,calc(env(safe-area-inset-top)+12px))] z-50 max-h-[calc(100dvh-max(8vh,calc(env(safe-area-inset-top)+12px))-max(16px,env(safe-area-inset-bottom)))] w-[calc(100vw-32px)] max-w-lg -translate-x-1/2 overflow-y-auto overscroll-contain rounded-[22px] p-5 animate-rise focus:outline-none', className)}
       >
         <DialogPrimitive.Title className={cn('font-display text-lg font-semibold text-ink', hideTitle && 'sr-only')}>{title}</DialogPrimitive.Title>
         {description ? <DialogPrimitive.Description className="mt-1 text-sm text-ink-muted">{description}</DialogPrimitive.Description> : <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>}

@@ -80,6 +80,8 @@ export const updateTaskInput = z
     tags: z.array(z.string().trim().min(1).max(50)).max(30),
     recurrence: recurrenceInput.nullable(),
     dependsOn: z.array(z.uuid()).max(50),
+    /** Replaces the task's reminder times (e.g. on time + 1 day early). */
+    reminders: z.array(reminderInput).max(10),
   })
   .partial()
   .extend({

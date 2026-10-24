@@ -1,4 +1,4 @@
-import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, normalizeAlarmSound, REPEAT_OPTIONS, repeatFromRrule, rruleFor, type AlarmSound, type RepeatValue } from '@remindora/core';
+import { ALARM_SOUNDS, CUSTOM_UNITS, customOffset, DEFAULT_ALARM_SOUND, normalizeAlarmSound, offsetLabel, REMIND_PRESETS, REPEAT_OPTIONS, repeatFromRrule, rruleFor, type AlarmSound, type CustomUnit, type RepeatValue } from '@remindora/core';
 import type { TaskDTO } from '@remindora/types';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useQueryClient } from '@tanstack/react-query';
@@ -31,6 +31,15 @@ export default function ReminderForm() {
   const [when, setWhen] = useState(() => DateTime.now().setZone(tz).plus({ hours: 1 }).startOf('hour'));
   const [repeat, setRepeat] = useState<RepeatValue>('none');
   const [sound, setSound] = useState<AlarmSound>(DEFAULT_ALARM_SOUND);
+  const [offsets, setOffsets] = useState<number[]>([0]);
+  const [customAmount, setCustomAmount] = useState('3');
+  const [customUnit, setCustomUnit] = useState<CustomUnit>('days');
+  const toggleOffset = (m: number) => setOffsets((o) => (o.includes(m) ? o.filter((x) => x !== m) : [...o, m].sort((a, b) => a - b)));
+  const addCustom = () => {
+    const m = customOffset(Number(customAmount), customUnit);
+    if (m === null) return Alert.alert('Custom reminder', 'Use a number between 1 minute and 30 days.');
+    setOffsets((o) => (o.includes(m) ? o : [...o, m].sort((a, b) => a - b)));
+  };
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -41,6 +50,8 @@ export default function ReminderForm() {
       if (t.dueAt) setWhen(DateTime.fromISO(t.dueAt).setZone(tz));
       setRepeat(repeatFromRrule(t.recurrence?.rrule));
       setSound(normalizeAlarmSound(t.alarmSound));
+      const existing = t.reminders.filter((r) => !r.subtaskId && !r.at).map((r) => r.offsetMinutes ?? 0);
+      if (existing.length) setOffsets([...new Set(existing)].sort((a, b) => a - b));
     });
   }, [id, tz]);
 
@@ -66,9 +77,13 @@ export default function ReminderForm() {
   async function save() {
     if (!title.trim()) return Alert.alert('What should I remind you about?', 'Type a short description first.');
     if (inPast) return Alert.alert('That time has passed', 'Pick a later time or another day.');
+    // Early reminders whose time has already passed would ring immediately: skip them.
+    const now = DateTime.now();
+    const valid = offsets.filter((m) => m === 0 || repeat !== 'none' || when.minus({ minutes: m }) > now);
+    if (!valid.length) return Alert.alert('When should I remind you?', 'Pick at least one time under “Remind me”.');
     setBusy(true);
     const rrule = rruleFor(repeat);
-    const body = { title: title.trim(), description: notes.trim() || null, dueAt: when.toUTC().toISO(), allDay: false, alarmSound: sound, recurrence: rrule ? { rrule } : null };
+    const body = { title: title.trim(), description: notes.trim() || null, dueAt: when.toUTC().toISO(), allDay: false, alarmSound: sound, reminders: valid.map((offsetMinutes) => ({ offsetMinutes })), recurrence: rrule ? { rrule } : null };
     try {
       if (id) await api(`/tasks/${id}`, { method: 'PATCH', body });
       else await api('/tasks', { body: { ...body, description: body.description ?? undefined, recurrence: body.recurrence ?? undefined } });
@@ -120,6 +135,30 @@ export default function ReminderForm() {
                 </Pressable>
               );
             })}
+          </View>
+
+          <Label>Remind me</Label>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {[...new Set([...REMIND_PRESETS.map((p) => p.minutes as number), ...offsets])].sort((a, b) => a - b).map((m) => {
+              const on = offsets.includes(m);
+              return (
+                <Pressable key={m} onPress={() => toggleOffset(m)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={{ paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: on ? colors.cyan : colors.border, backgroundColor: on ? 'rgba(96,233,255,0.15)' : 'transparent' }}>
+                  <Text style={{ color: on ? colors.cyan : colors.text, fontWeight: '600' }}>{on ? '✓ ' : ''}{offsetLabel(m)}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            <Text style={{ color: colors.textMuted }}>Custom</Text>
+            <TextInput value={customAmount} onChangeText={setCustomAmount} keyboardType="number-pad" maxLength={3} accessibilityLabel="Custom amount" style={{ width: 56, height: 44, color: colors.text, textAlign: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 12, fontSize: 16 }} />
+            {CUSTOM_UNITS.map((u) => (
+              <Pressable key={u.value} onPress={() => setCustomUnit(u.value)} accessibilityRole="radio" accessibilityState={{ checked: customUnit === u.value }} style={{ paddingHorizontal: 10, height: 44, justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: customUnit === u.value ? colors.cyan : colors.border }}>
+                <Text style={{ color: customUnit === u.value ? colors.cyan : colors.text }}>{u.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={addCustom} accessibilityRole="button" style={{ paddingHorizontal: 14, height: 44, justifyContent: 'center', borderRadius: 12, backgroundColor: 'rgba(96,233,255,0.15)' }}>
+              <Text style={{ color: colors.cyan, fontWeight: '700' }}>+ Add</Text>
+            </Pressable>
           </View>
 
           <Label>Sound</Label>

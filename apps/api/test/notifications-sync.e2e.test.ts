@@ -216,6 +216,28 @@ describe('reminder sounds', () => {
   });
 });
 
+describe('early reminders', () => {
+  it('schedules each “remind me” time, replaces them on edit, and labels early alarms', async () => {
+    const { desktop, desktopSocket, phoneSocket } = await twoDevices();
+    const due = new Date(Date.now() + 3 * 86_400_000);
+    const created = await h.http().post('/tasks').set(auth(desktop.accessToken)).send({ title: 'Dentist', dueAt: due.toISOString(), reminders: [{ offsetMinutes: 0 }, { offsetMinutes: 1440 }] }).expect(201);
+    const byOffset = Object.fromEntries(created.body.reminders.map((r: { offsetMinutes: number; nextFireAt: string; id: string }) => [r.offsetMinutes, r]));
+    expect(Object.keys(byOffset).sort()).toEqual(['0', '1440']);
+    expect(new Date(byOffset['1440'].nextFireAt).getTime()).toBe(due.getTime() - 86_400_000);
+
+    const edited = await h.http().patch(`/tasks/${created.body.id}`).set(auth(desktop.accessToken)).send({ reminders: [{ offsetMinutes: 60 }, { offsetMinutes: 2 * 1440 + 15 }] }).expect(200);
+    expect(edited.body.reminders.map((r: { offsetMinutes: number }) => r.offsetMinutes).sort((a: number, b: number) => a - b)).toEqual([60, 2895]);
+
+    const early = edited.body.reminders.find((r: { offsetMinutes: number }) => r.offsetMinutes === 60);
+    const fired = await fireReminder(deps, { reminderId: early.id, fireAt: early.nextFireAt }, scheduler, new Date(early.nextFireAt));
+    expect(fired.status).toBe('fired');
+    const n = await h.prisma.notification.findFirstOrThrow({ where: { reminderId: early.id } });
+    expect(n.body.startsWith('In 1 hour · ')).toBe(true);
+    desktopSocket.disconnect();
+    phoneSocket.disconnect();
+  });
+});
+
 describe('cross-device sync', () => {
   it('pushes edits to other devices in real time and serves an incremental change feed with tombstones', async () => {
     const { desktop, phone, desktopSocket, phoneSocket } = await twoDevices();

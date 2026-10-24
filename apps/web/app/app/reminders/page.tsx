@@ -1,10 +1,10 @@
 'use client';
 import { Button, cn, GlassPanel, Spinner } from '@remindora/ui';
 import type { TaskDTO } from '@remindora/types';
-import { alarmSoundLabel } from '@remindora/core';
-import { AlarmClock, Bell, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
+import { alarmSoundLabel, countdownLabel, offsetLabel } from '@remindora/core';
+import { AlarmClock, Bell, BellRing, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { OrbitSummary } from '@/components/orbit/orbit-summary';
 import { useCompleteTask, useDeleteTask, useTasks } from '@/lib/queries';
 import { repeatLabel, useReminderForm } from '@/lib/reminder-form';
@@ -17,18 +17,20 @@ function groupLabel(d: DateTime, now: DateTime) {
   return d.toFormat('cccc d LLLL');
 }
 
-function ReminderRow({ task, tz, missed }: { task: TaskDTO; tz: string; missed: boolean }) {
+function ReminderRow({ task, tz, missed, now }: { task: TaskDTO; tz: string; missed: boolean; now: Date }) {
   const open = useReminderForm((s) => s.open);
   const complete = useCompleteTask();
   const remove = useDeleteTask();
   const due = DateTime.fromISO(task.dueAt!).setZone(tz);
   const repeat = repeatLabel(task.recurrence?.rrule);
+  const early = task.reminders.filter((r) => !r.subtaskId && (r.offsetMinutes ?? 0) > 0).map((r) => offsetLabel(r.offsetMinutes!));
   return (
     <li>
       <GlassPanel className={cn('flex items-center gap-4 p-4', missed && 'border-danger/40')}>
         <div className="w-20 shrink-0 text-center">
           <div className={cn('font-display text-2xl font-semibold tabular-nums', missed ? 'text-danger' : 'text-ink')}>{due.toFormat('HH:mm')}</div>
           <div className="text-xs text-ink-faint">{due.toFormat('ccc d LLL')}</div>
+          <div className={cn('mt-0.5 text-xs font-medium', missed ? 'text-danger' : 'text-cyan')}>{countdownLabel(due.toJSDate(), now)}</div>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold">{task.title}</p>
@@ -37,6 +39,11 @@ function ReminderRow({ task, tz, missed }: { task: TaskDTO; tz: string; missed: 
             {repeat && (
               <span className="inline-flex items-center gap-1">
                 <Repeat size={13} /> {repeat}
+              </span>
+            )}
+            {early.length > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <BellRing size={13} /> also {early.join(', ')}
               </span>
             )}
             {task.alarmSound && task.alarmSound !== 'alarm' && (
@@ -68,6 +75,12 @@ export default function RemindersPage() {
   const tz = useSession((s) => s.user?.timezone ?? 'UTC');
   const open = useReminderForm((s) => s.open);
   const { data: tasks = [], isLoading } = useTasks({ view: 'reminders' });
+  // Countdowns tick every 30 seconds.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const groups = useMemo(() => {
     const now = DateTime.now().setZone(tz);
@@ -120,7 +133,7 @@ export default function RemindersPage() {
               </h2>
               <ul className="space-y-2">
                 {g.items.map((t) => (
-                  <ReminderRow key={t.id} task={t} tz={tz} missed={g.missed} />
+                  <ReminderRow key={t.id} task={t} tz={tz} missed={g.missed} now={now} />
                 ))}
               </ul>
             </section>

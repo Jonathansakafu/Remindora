@@ -25,6 +25,15 @@ export interface Scheduler {
  * DB's nextFireAt is authoritative, and the notification dedupeKey makes the
  * notification itself idempotent across retries and devices.
  */
+/** "In 1 day · " for early reminders (offset before the due time); nothing for on-time ones. */
+export function earlyLabel(offsetMinutes: number | null | undefined) {
+  const m = offsetMinutes ?? 0;
+  if (m <= 0) return '';
+  const fmt = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+  const text = m % 1440 === 0 ? fmt(m / 1440, 'day') : m % 60 === 0 ? fmt(m / 60, 'hour') : m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+  return `In ${text} · `;
+}
+
 export async function fireReminder(d: Deps, job: FireReminderJob, scheduler: Scheduler, now = new Date()): Promise<FireOutcome> {
   const claimed = await d.prisma.reminder.updateMany({
     where: {
@@ -89,7 +98,7 @@ export async function fireReminder(d: Deps, job: FireReminderJob, scheduler: Sch
             kind: 'REMINDER',
             priority: task.priority,
             title,
-            body: `${task.project.name} · due ${whenLabel}${repeatNote}`,
+            body: `${earlyLabel(r.offsetMinutes)}${task.project.name} · due ${whenLabel}${repeatNote}`,
             silent: decision.silent,
             dedupeKey: key,
             data: { attempt: r.attempt, occurrence: occurrence.toISOString(), sound: task.alarmSound ?? 'alarm' },
